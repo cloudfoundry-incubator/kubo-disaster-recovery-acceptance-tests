@@ -1,0 +1,18 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: cloudfoundrylondon/backup-and-restore-minimal}
+
+inputs:
+- name: kubo-disaster-recovery-acceptance-tests
+  path: src/github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests
+- name: bbr-binary-release
+- name: k-drats-integration-config
+
+params:
+  INTEGRATION_CONFIG_PATH: # JSON file in k-drats-integration-config resource
+
+run:
+  path: src/github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/ci/run-k-drats/task.sh
