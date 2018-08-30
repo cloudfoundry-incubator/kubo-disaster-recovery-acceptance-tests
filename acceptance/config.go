@@ -6,12 +6,7 @@ type Config struct {
 	TimeoutMinutes     time.Duration `json:"timeout_in_minutes"`
 	KuboDeploymentName string        `json:"kubo_deployment_name"`
 	Kubo               KuboConfig    `json:"kubo"`
-}
-
-func NewConfig() (Config, error) {
-	return Config{
-		TimeoutMinutes: 30,
-	}, nil
+	ArtifactPath       string
 }
 
 type KuboConfig struct {

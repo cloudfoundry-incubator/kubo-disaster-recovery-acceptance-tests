@@ -15,7 +15,14 @@ var _ = Describe("Kubo", func() {
 		})
 
 		By("backing up", func() {
-			fmt.Println("bbr deployment -d cfcr backup")
+			runCommandSuccessfullyWithFailureMessage(
+				"bbr deployment backup",
+				fmt.Sprintf(
+					"bbr deployment -d %s backup --artifact-path %s",
+					config.KuboDeploymentName,
+					config.ArtifactPath,
+				),
+			)
 		})
 
 		By("running the after backup step", func() {
@@ -26,7 +33,16 @@ var _ = Describe("Kubo", func() {
 		})
 
 		By("restoring", func() {
-			fmt.Println("bbr deployment -d cfcr restore --artifact-path blah")
+			runCommandSuccessfullyWithFailureMessage(
+				"bbr deployment restore",
+				fmt.Sprintf(
+					"bbr deployment -d %s restore --artifact-path %s/$(ls %s | grep %s | head -n 1)",
+					config.KuboDeploymentName,
+					config.ArtifactPath,
+					config.ArtifactPath,
+					config.KuboDeploymentName,
+				),
+			)
 		})
 
 		By("waiting for kubo api to be available", func() {
@@ -43,7 +59,13 @@ var _ = Describe("Kubo", func() {
 
 	AfterEach(func() {
 		By("running bbr deployment backup-cleanup", func() {
-			fmt.Println("bbr deployment -d cfcr backup-cleanup")
+			runCommandSuccessfullyWithFailureMessage(
+				"bbr deployment backup-cleanup",
+				fmt.Sprintf(
+					"bbr deployment -d %s backup-cleanup",
+					config.KuboDeploymentName,
+				),
+			)
 		})
 
 		By("Running cleanup for each testcase", func() {
