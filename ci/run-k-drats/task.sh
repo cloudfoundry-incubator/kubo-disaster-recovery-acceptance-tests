@@ -7,9 +7,13 @@ pushd bbr-binary-release
   export BBR_BINARY_PATH="$PWD/releases/bbr"
 popd
 
+pushd "bbl-state/$BBL_STATE_DIR"
+  eval "$(bbl print-env)"
+popd
+
 export GOPATH="$PWD"
 export PATH="$PATH:$GOPATH/bin"
-INTEGRATION_CONFIG_PATH="$PWD/$INTEGRATION_CONFIG_PATH"
+export CONFIG_PATH="$PWD/k-drats-config/$CONFIG_PATH"
 
 pushd src/github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests
   scripts/_run_acceptance_tests.sh
