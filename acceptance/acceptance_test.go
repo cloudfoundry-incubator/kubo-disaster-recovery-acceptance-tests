@@ -1,24 +1,56 @@
-package acceptance_test
+package acceptance
 
 import (
+	"fmt"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/runner"
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcases"
 )
 
 var _ = Describe("Kubo", func() {
-	config, err := runner.NewConfig()
-	if err != nil {
-		panic(err)
-	}
+	It("can backup and restore", func() {
+		By("running the before backup step", func() {
+			for _, testCase := range testCases {
+				fmt.Println("Running the before backup step for " + testCase.Name())
+				testCase.BeforeBackup(testCaseConfig)
+			}
+		})
 
-	SetDefaultEventuallyTimeout(config.Timeout)
+		By("backing up", func() {
+			fmt.Println("bbr deployment -d cfcr backup")
+		})
 
-	testCases := []runner.TestCase{
-		testcases.FakeTestCase{},
-	}
+		By("running the after backup step", func() {
+			for _, testCase := range testCases {
+				fmt.Println("Running the after backup step for " + testCase.Name())
+				testCase.AfterBackup(testCaseConfig)
+			}
+		})
 
-	runner.RunBoshDisasterRecoveryAcceptanceTests(config, testCases)
+		By("restoring", func() {
+			fmt.Println("bbr deployment -d cfcr restore --artifact-path blah")
+		})
+
+		By("waiting for kubo api to be available", func() {
+			fmt.Println("wait for kubo api")
+		})
+
+		By("running the after restore step", func() {
+			for _, testCase := range testCases {
+				fmt.Println("Running the after restore step for " + testCase.Name())
+				testCase.AfterRestore(testCaseConfig)
+			}
+		})
+	})
+
+	AfterEach(func() {
+		By("running bbr deployment backup-cleanup", func() {
+			fmt.Println("bbr deployment -d cfcr backup-cleanup")
+		})
+
+		By("Running cleanup for each testcase", func() {
+			for _, testCase := range testCases {
+				fmt.Println("Running the cleanup step for " + testCase.Name())
+				testCase.Cleanup(testCaseConfig)
+			}
+		})
+	})
 })
