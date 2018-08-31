@@ -18,9 +18,8 @@ var _ = Describe("Kubo", func() {
 			runCommandSuccessfullyWithFailureMessage(
 				"bbr deployment backup",
 				fmt.Sprintf(
-					"bbr deployment -d %s backup --artifact-path %s",
-					config.KuboDeploymentName,
-					config.ArtifactPath,
+					"bbr deployment backup --artifact-path %s",
+					artifactPath,
 				),
 			)
 		})
@@ -36,11 +35,9 @@ var _ = Describe("Kubo", func() {
 			runCommandSuccessfullyWithFailureMessage(
 				"bbr deployment restore",
 				fmt.Sprintf(
-					"bbr deployment -d %s restore --artifact-path %s/$(ls %s | grep %s | head -n 1)",
-					config.KuboDeploymentName,
-					config.ArtifactPath,
-					config.ArtifactPath,
-					config.KuboDeploymentName,
+					"bbr deployment restore --artifact-path %s/$(ls %s | head -n 1)",
+					artifactPath,
+					artifactPath,
 				),
 			)
 		})
@@ -62,8 +59,7 @@ var _ = Describe("Kubo", func() {
 			runCommandSuccessfullyWithFailureMessage(
 				"bbr deployment backup-cleanup",
 				fmt.Sprintf(
-					"bbr deployment -d %s backup-cleanup",
-					config.KuboDeploymentName,
+					"bbr deployment backup-cleanup",
 				),
 			)
 		})

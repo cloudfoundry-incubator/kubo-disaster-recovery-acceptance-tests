@@ -3,10 +3,8 @@ package acceptance
 import "time"
 
 type Config struct {
-	TimeoutMinutes     time.Duration `json:"timeout_in_minutes"`
-	KuboDeploymentName string        `json:"kubo_deployment_name"`
-	Kubo               KuboConfig    `json:"kubo"`
-	ArtifactPath       string
+	TimeoutMinutes time.Duration `json:"timeout_in_minutes"`
+	Kubo           KuboConfig    `json:"kubo"`
 }
 
 type KuboConfig struct {

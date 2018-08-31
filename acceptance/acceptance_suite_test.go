@@ -18,6 +18,7 @@ import (
 
 var (
 	config         Config
+	artifactPath   string
 	testCaseConfig = testcases.Config{}
 	testCases      []TestCase
 )
@@ -32,14 +33,15 @@ var _ = BeforeSuite(func() {
 	mustHaveEnv("BOSH_CLIENT")
 	mustHaveEnv("BOSH_CLIENT_SECRET")
 	mustHaveEnv("BOSH_CA_CERT")
+	mustHaveEnv("BOSH_DEPLOYMENT")
 
 	ensureBBR()
 
 	config = parseConfig(mustHaveEnv("CONFIG_PATH"))
 
-	artifactPath, err := ioutil.TempDir("", "k-drats")
+	var err error
+	artifactPath, err = ioutil.TempDir("", "k-drats")
 	Expect(err).NotTo(HaveOccurred())
-	config.ArtifactPath = artifactPath
 
 	SetDefaultEventuallyTimeout(config.TimeoutMinutes * time.Minute)
 
@@ -54,7 +56,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(config.ArtifactPath)
+	err := os.RemoveAll(artifactPath)
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -77,8 +79,6 @@ func parseConfig(path string) Config {
 
 func mustHaveEnv(name string) string {
 	val := os.Getenv(name)
-	if val == "" {
-		panic(fmt.Sprintf("Env var '%s' not set", name))
-	}
+	Expect(val).NotTo(BeEmpty(), fmt.Sprintf("Env var '%s' not set", name))
 	return val
 }
