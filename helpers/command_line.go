@@ -1,4 +1,4 @@
-package acceptance
+package helpers
 
 import (
 	"fmt"

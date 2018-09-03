@@ -1,6 +1,6 @@
 package testcases
 
-import "github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/acceptance"
+import "github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/helpers"
 
 type FakeTestCase struct{}
 
@@ -9,7 +9,7 @@ func (t FakeTestCase) Name() string {
 }
 
 func (t FakeTestCase) BeforeBackup(config Config) {
-	acceptance.RunCommandSuccessfullyWithFailureMessage("kubectl get all", "kubectl get all")
+	helpers.RunCommandSuccessfullyWithFailureMessage("kubectl get all", "kubectl get all")
 }
 
 func (t FakeTestCase) AfterBackup(config Config) {}
