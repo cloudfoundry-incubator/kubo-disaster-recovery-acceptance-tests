@@ -18,6 +18,7 @@ params:
   CONFIG_PATH: config.json # Path to config in k-drats-config resource
   BBL_STATE_DIR:  # Path to bbl state inside bbl-state resource
   BOSH_DEPLOYMENT:  # Kubo bosh deployment name
+  BOSH_DIRECTOR_NAME:
 
 run:
   path: src/github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/ci/run-k-drats/task.sh
