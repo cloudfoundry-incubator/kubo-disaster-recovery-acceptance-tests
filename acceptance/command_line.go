@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-func runCommandSuccessfullyWithFailureMessage(description string, cmd string) *gexec.Session {
+func RunCommandSuccessfullyWithFailureMessage(description string, cmd string) *gexec.Session {
 	session := runCommandWithStream(description, cmd)
 	Expect(session).To(gexec.Exit(0), "Command errored: "+description)
 	return session
