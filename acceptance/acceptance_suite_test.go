@@ -50,7 +50,6 @@ var _ = BeforeSuite(func() {
 	SetDefaultEventuallyTimeout(config.TimeoutMinutes * time.Minute)
 
 	testCases = []TestCase{
-		testcases.FakeTestCase{},
 		testcases.KuboTestCase{},
 	}
 
