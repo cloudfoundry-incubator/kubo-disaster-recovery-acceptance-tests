@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"net/http"
 	"k8s.io/apimachinery/pkg/api/errors"
-	. "github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/helpers"
 )
 
 type KuboTestCase struct{
@@ -106,11 +105,11 @@ func (t KuboTestCase) AfterRestore(config Config) {
 
 	By("Waiting for system workloads", func() {
 		expectedSelector := []string{"kube-dns", "heapster", "kubernetes-dashboard", "influxdb"}
-		runner := NewKubectlRunner()
 
 		systemDeploymentApi := k8s.AppsV1().Deployments("kube-system")
 		for _, selector := range expectedSelector {
-			deployment := runner.GetResourceNameBySelector("kube-system", "deployment", "k8s-app="+selector)
+			deployment, err := getDeploymentName(k8s, "kube-system", "k8s-app="+selector)
+			Expect(err).NotTo(HaveOccurred())
 			err = waitForDeployment(systemDeploymentApi, "kube-system", deployment)
 			Expect(err).NotTo(HaveOccurred())
 		}
@@ -118,6 +117,17 @@ func (t KuboTestCase) AfterRestore(config Config) {
 }
 
 func (t KuboTestCase) Cleanup(config Config) {}
+
+func getDeploymentName(k8s kubernetes.Interface, namespace, selector string) (string, error) {
+	deployments, err := k8s.AppsV1().Deployments(namespace).List(metav1.ListOptions{LabelSelector:selector})
+	if err != nil {
+		return "", err
+	}
+	if len(deployments.Items) != 1 {
+		return "", fmt.Errorf("one %s deployment should be found", selector)
+	}
+	return deployments.Items[0].Name , nil
+}
 
 func newKubeClient() (kubernetes.Interface, error) {
 	config, err := readKubeConfig()
