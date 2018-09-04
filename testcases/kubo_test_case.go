@@ -59,20 +59,26 @@ func (t KuboTestCase) BeforeBackup(config Config) {
 
 		err = waitForDeployment(deploymentApi, namespace, nginx1Deployment.Name)
 		Expect(err).NotTo(HaveOccurred())
+
 		err = waitForDeployment(deploymentApi, namespace, nginx2Deployment.Name)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
 
 func (t KuboTestCase) AfterBackup(config Config) {
-	err = deploymentApi.Delete(nginx2Deployment.Name, &metav1.DeleteOptions{})
-	Expect(err).ToNot(HaveOccurred())
+	By("Deleting workload 2", func() {
+		err = deploymentApi.Delete(nginx2Deployment.Name, &metav1.DeleteOptions{})
+		Expect(err).ToNot(HaveOccurred())
+	})
 
-	nginx3Deployment = newDeployment("nginx-3", getNginxDeploymentSpec())
-	nginx3Deployment, err = k8s.AppsV1().Deployments(namespace).Create(nginx3Deployment)
-	Expect(err).ToNot(HaveOccurred())
-	err = waitForDeployment(deploymentApi, namespace, nginx3Deployment.Name)
-	Expect(err).NotTo(HaveOccurred())
+	By("Deploying workload 3", func() {
+		nginx3Deployment = newDeployment("nginx-3", getNginxDeploymentSpec())
+		nginx3Deployment, err = k8s.AppsV1().Deployments(namespace).Create(nginx3Deployment)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = waitForDeployment(deploymentApi, namespace, nginx3Deployment.Name)
+		Expect(err).NotTo(HaveOccurred())
+	})
 }
 
 func (t KuboTestCase) AfterRestore(config Config) {
@@ -91,6 +97,7 @@ func (t KuboTestCase) AfterRestore(config Config) {
 	By("Waiting for workloads 1 and 2 to be available", func() {
 		err = waitForDeployment(deploymentApi, namespace, nginx1Deployment.Name)
 		Expect(err).NotTo(HaveOccurred())
+
 		err = waitForDeployment(deploymentApi, namespace, nginx2Deployment.Name)
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -98,6 +105,7 @@ func (t KuboTestCase) AfterRestore(config Config) {
 	By("Asserting that workload 3 is gone", func() {
 		_, err = deploymentApi.Get(nginx3Deployment.Name, metav1.GetOptions{})
 		Expect(err).To(HaveOccurred())
+
 		statusErr, ok := err.(*errors.StatusError)
 		Expect(ok).To(BeTrue())
 		Expect(statusErr.ErrStatus.Code).To(Equal(int32(404)))
@@ -110,13 +118,19 @@ func (t KuboTestCase) AfterRestore(config Config) {
 		for _, selector := range expectedSelector {
 			deployment, err := getDeploymentName(k8s, "kube-system", "k8s-app="+selector)
 			Expect(err).NotTo(HaveOccurred())
+
 			err = waitForDeployment(systemDeploymentApi, "kube-system", deployment)
 			Expect(err).NotTo(HaveOccurred())
 		}
 	})
 }
 
-func (t KuboTestCase) Cleanup(config Config) {}
+func (t KuboTestCase) Cleanup(config Config) {
+	By("Deleting the test namespace", func() {
+		err := k8s.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	})
+}
 
 func getDeploymentName(k8s kubernetes.Interface, namespace, selector string) (string, error) {
 	deployments, err := k8s.AppsV1().Deployments(namespace).List(metav1.ListOptions{LabelSelector:selector})
@@ -124,7 +138,7 @@ func getDeploymentName(k8s kubernetes.Interface, namespace, selector string) (st
 		return "", err
 	}
 	if len(deployments.Items) != 1 {
-		return "", fmt.Errorf("one %s deployment should be found", selector)
+		return "", fmt.Errorf("one %s deployment should exist, instead found: %#v", selector, deployments.Items)
 	}
 	return deployments.Items[0].Name , nil
 }
@@ -187,7 +201,7 @@ func waitForDeployment(deploymentAPI tappsv1.DeploymentInterface, namespace stri
 	_, err = watch.Until(1*time.Minute, w, func(event watch.Event) (bool, error) {
 		deployment, ok := event.Object.(*appsv1.Deployment)
 		if !ok {
-			return false, fmt.Errorf("Expected `%#v` to be of type appsv1.Deployment", event.Object)
+			return false, fmt.Errorf("expected `%#v` to be of type appsv1.Deployment", event.Object)
 		}
 
 		if deployment.Name == deploymentName {
@@ -201,7 +215,7 @@ func waitForDeployment(deploymentAPI tappsv1.DeploymentInterface, namespace stri
 	})
 
 	if err != nil {
-		return fmt.Errorf("Deployment `%s` did not finish rolling out with error: %s", deploymentName, err)
+		return fmt.Errorf("deployment `%s` did not finish rolling out with error: %s", deploymentName, err)
 	}
 
 	return nil
