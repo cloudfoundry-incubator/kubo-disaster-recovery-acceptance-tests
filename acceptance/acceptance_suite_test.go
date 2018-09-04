@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/helpers"
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcases"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"time"
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/helpers"
 )
 
 var (
@@ -23,6 +23,7 @@ var (
 	testCaseConfig = testcases.Config{}
 	testCases      []TestCase
 	kubeCACertPath string
+	filter         ConfigTestCaseFilter
 )
 
 func TestAcceptance(t *testing.T) {
@@ -40,6 +41,7 @@ var _ = BeforeSuite(func() {
 	ensureBBR()
 
 	config = parseConfig(mustHaveEnv("CONFIG_PATH"))
+	filter = NewConfigTestCaseFilter(mustHaveEnv("CONFIG_PATH"))
 
 	setKubectlConfig(config)
 
@@ -54,7 +56,7 @@ var _ = BeforeSuite(func() {
 	}
 
 	fmt.Println("Running testcases: ")
-	for _, t := range testCases {
+	for _, t := range filter.Filter(testCases) {
 		fmt.Println(t.Name())
 	}
 })
@@ -90,7 +92,7 @@ func mustHaveEnv(name string) string {
 }
 
 func setKubectlConfig(config Config) {
-	kubeCACertFile, err := ioutil.TempFile("","kubeCACert")
+	kubeCACertFile, err := ioutil.TempFile("", "kubeCACert")
 	Expect(err).NotTo(HaveOccurred())
 
 	_, err = kubeCACertFile.Write([]byte(config.CACert))
