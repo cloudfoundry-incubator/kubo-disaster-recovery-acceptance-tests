@@ -100,35 +100,26 @@ func setKubectlConfig(config Config) {
 
 	helpers.RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-cluster",
-		fmt.Sprintf(
-			"kubectl config set-cluster %s --server=%s --certificate-authority=%s --embed-certs=true",
-			config.ClusterName,
-			config.APIServerURL,
-			kubeCACertPath,
-		),
+		"kubectl", "config", "set-cluster", config.ClusterName,
+		fmt.Sprintf("--server=%s", config.APIServerURL),
+		fmt.Sprintf("--certificate-authority=%s", kubeCACertPath),
+		"--embed-certs=true",
 	)
+
 	helpers.RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-credentials",
-		fmt.Sprintf(
-			"kubectl config set-credentials %s --token='%s'",
-			config.Username,
-			config.Password,
-		),
+		"kubectl", "config", "set-credentials", config.Username, fmt.Sprintf("--token='%s'", config.Password),
 	)
+
 	helpers.RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-context",
-		fmt.Sprintf(
-			"kubectl config set-context %s --cluster=%s --user=%s",
-			config.ClusterName,
-			config.ClusterName,
-			config.Username,
-		),
+		"kubectl", "config", "set-context", config.ClusterName,
+		fmt.Sprintf("--cluster=%s", config.ClusterName),
+		fmt.Sprintf("--user=%s", config.Username),
 	)
+
 	helpers.RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config use-context",
-		fmt.Sprintf(
-			"kubectl config use-context %s",
-			config.ClusterName,
-		),
+		"kubectl", "config", "use-context", config.ClusterName,
 	)
 }
