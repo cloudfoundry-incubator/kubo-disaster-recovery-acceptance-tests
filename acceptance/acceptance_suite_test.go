@@ -109,7 +109,7 @@ func setKubectlConfig(config Config) {
 
 	helpers.RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-credentials",
-		"kubectl", "config", "set-credentials", config.Username, fmt.Sprintf("--token='%s'", config.Password),
+		"kubectl", "config", "set-credentials", config.Username, fmt.Sprintf("--token=%s", config.Password),
 	)
 
 	helpers.RunCommandSuccessfullyWithFailureMessage(
