@@ -30,7 +30,7 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
 1. Create an `config.json` file, for example:
     ```json
     {
-      "include_kubo_test_case": true,
+      "include_deployment_test_case": true,
       "timeout_in_minutes": 30,
       "cluster_name": "kubo",
       "api_server_url": "<k8s_api_url>",

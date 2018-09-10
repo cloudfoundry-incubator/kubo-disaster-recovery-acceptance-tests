@@ -33,7 +33,7 @@ var (
 )
 
 func (t Deployment) Name() string {
-	return "kubo_test_case"
+	return "deployment_test_case"
 }
 
 func (t Deployment) BeforeBackup(config Config) {
