@@ -2,7 +2,6 @@ package acceptance
 
 import (
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcases"
 )
 
 type TestCase interface {

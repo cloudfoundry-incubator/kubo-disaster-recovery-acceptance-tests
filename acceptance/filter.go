@@ -1,10 +1,11 @@
 package acceptance
 
-import "fmt"
 import (
 	"encoding/json"
-	. "github.com/onsi/gomega"
+	"fmt"
 	"io/ioutil"
+
+	. "github.com/onsi/gomega"
 )
 
 type ConfigTestCaseFilter map[string]interface{}
