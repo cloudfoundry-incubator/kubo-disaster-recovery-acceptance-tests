@@ -1,43 +1,42 @@
-package testcases
+package testcase
 
 import (
+	"fmt"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/satori/go.uuid"
+	"k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	tappsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	appsv1 "k8s.io/api/apps/v1"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/ginkgo"
-	"github.com/satori/go.uuid"
-	"k8s.io/api/apps/v1"
-	"time"
-	"k8s.io/apimachinery/pkg/watch"
-	"fmt"
 	"net/http"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"time"
 )
 
-type KuboTestCase struct{
+type Deployment struct {
 }
 
 var (
-	err            error
-	k8s            kubernetes.Interface
-	namespace      string
-	deploymentApi  tappsv1.DeploymentInterface
+	err              error
+	k8s              kubernetes.Interface
+	namespace        string
+	deploymentApi    tappsv1.DeploymentInterface
 	nginx1Deployment *v1.Deployment
 	nginx2Deployment *v1.Deployment
 	nginx3Deployment *v1.Deployment
-
 )
 
-func (t KuboTestCase) Name() string {
+func (t Deployment) Name() string {
 	return "kubo_test_case"
 }
 
-func (t KuboTestCase) BeforeBackup(config Config) {
+func (t Deployment) BeforeBackup(config Config) {
 	By("Initializing K8s client", func() {
 		k8s, err = newKubeClient()
 		Expect(err).NotTo(HaveOccurred())
@@ -65,7 +64,7 @@ func (t KuboTestCase) BeforeBackup(config Config) {
 	})
 }
 
-func (t KuboTestCase) AfterBackup(config Config) {
+func (t Deployment) AfterBackup(config Config) {
 	By("Deleting workload 2", func() {
 		err = deploymentApi.Delete(nginx2Deployment.Name, &metav1.DeleteOptions{})
 		Expect(err).ToNot(HaveOccurred())
@@ -81,7 +80,7 @@ func (t KuboTestCase) AfterBackup(config Config) {
 	})
 }
 
-func (t KuboTestCase) AfterRestore(config Config) {
+func (t Deployment) AfterRestore(config Config) {
 	By("Waiting for API to be available", func() {
 		Eventually(func() bool {
 			var status int
@@ -92,6 +91,19 @@ func (t KuboTestCase) AfterRestore(config Config) {
 			return false
 		}, "60s", "5s").Should(BeTrue())
 
+	})
+
+	By("Waiting for system workloads", func() {
+		expectedSelector := []string{"kube-dns", "heapster", "kubernetes-dashboard", "influxdb"}
+
+		systemDeploymentApi := k8s.AppsV1().Deployments("kube-system")
+		for _, selector := range expectedSelector {
+			deployment, err := getDeploymentName(k8s, "kube-system", "k8s-app="+selector)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = waitForDeployment(systemDeploymentApi, "kube-system", deployment)
+			Expect(err).NotTo(HaveOccurred())
+		}
 	})
 
 	By("Waiting for workloads 1 and 2 to be available", func() {
@@ -110,22 +122,9 @@ func (t KuboTestCase) AfterRestore(config Config) {
 		Expect(ok).To(BeTrue())
 		Expect(statusErr.ErrStatus.Code).To(Equal(int32(404)))
 	})
-
-	By("Waiting for system workloads", func() {
-		expectedSelector := []string{"kube-dns", "heapster", "kubernetes-dashboard", "influxdb"}
-
-		systemDeploymentApi := k8s.AppsV1().Deployments("kube-system")
-		for _, selector := range expectedSelector {
-			deployment, err := getDeploymentName(k8s, "kube-system", "k8s-app="+selector)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = waitForDeployment(systemDeploymentApi, "kube-system", deployment)
-			Expect(err).NotTo(HaveOccurred())
-		}
-	})
 }
 
-func (t KuboTestCase) Cleanup(config Config) {
+func (t Deployment) Cleanup(config Config) {
 	By("Deleting the test namespace", func() {
 		err := k8s.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -133,14 +132,14 @@ func (t KuboTestCase) Cleanup(config Config) {
 }
 
 func getDeploymentName(k8s kubernetes.Interface, namespace, selector string) (string, error) {
-	deployments, err := k8s.AppsV1().Deployments(namespace).List(metav1.ListOptions{LabelSelector:selector})
+	deployments, err := k8s.AppsV1().Deployments(namespace).List(metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return "", err
 	}
 	if len(deployments.Items) != 1 {
 		return "", fmt.Errorf("one %s deployment should exist, instead found: %#v", selector, deployments.Items)
 	}
-	return deployments.Items[0].Name , nil
+	return deployments.Items[0].Name, nil
 }
 
 func newKubeClient() (kubernetes.Interface, error) {

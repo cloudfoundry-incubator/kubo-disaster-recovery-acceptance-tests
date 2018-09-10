@@ -1,21 +1,21 @@
-package helpers
+package acceptance
 
 import (
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"os/exec"
 	"io/ioutil"
+	"os/exec"
 )
 
-func RunCommandSuccessfullyWithFailureMessage(description string, cmd string, args... string) *gexec.Session {
+func RunCommandSuccessfullyWithFailureMessage(description string, cmd string, args ...string) *gexec.Session {
 	session := runCommandWithStream(description, cmd, args...)
 	Expect(session).To(gexec.Exit(0), "Command errored: "+description)
 	return session
 }
 
-func runCommandWithStream(description string, cmd string, args... string) *gexec.Session {
+func runCommandWithStream(description string, cmd string, args ...string) *gexec.Session {
 	command := exec.Command(cmd, args...)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
@@ -32,4 +32,3 @@ func GetArtifactFromPath(artifactPath string) string {
 
 	return files[0].Name()
 }
-

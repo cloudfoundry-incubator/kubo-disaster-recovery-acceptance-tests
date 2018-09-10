@@ -1,11 +1,14 @@
 package acceptance
 
-import "github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcases"
+import (
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcases"
+)
 
 type TestCase interface {
 	Name() string
-	BeforeBackup(testcases.Config)
-	AfterBackup(testcases.Config)
-	AfterRestore(testcases.Config)
-	Cleanup(testcases.Config)
+	BeforeBackup(testcase.Config)
+	AfterBackup(testcase.Config)
+	AfterRestore(testcase.Config)
+	Cleanup(testcase.Config)
 }

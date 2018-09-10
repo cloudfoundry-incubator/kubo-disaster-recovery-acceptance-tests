@@ -1,13 +1,13 @@
 package acceptance
 
 import (
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
 	"testing"
 
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/helpers"
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcases"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -20,7 +20,7 @@ import (
 var (
 	config         Config
 	artifactPath   string
-	testCaseConfig = testcases.Config{}
+	testCaseConfig = testcase.Config{}
 	testCases      []TestCase
 	kubeCACertPath string
 	filter         ConfigTestCaseFilter
@@ -52,13 +52,14 @@ var _ = BeforeSuite(func() {
 	SetDefaultEventuallyTimeout(config.TimeoutMinutes * time.Minute)
 
 	testCases = []TestCase{
-		testcases.KuboTestCase{},
+		testcase.Deployment{},
 	}
 
-	fmt.Println("Running testcases: ")
+	fmt.Println("Running test cases: ")
 	for _, t := range filter.Filter(testCases) {
 		fmt.Println(t.Name())
 	}
+	fmt.Println("")
 })
 
 var _ = AfterSuite(func() {
@@ -99,7 +100,7 @@ func setKubectlConfig(config Config) {
 	Expect(err).NotTo(HaveOccurred())
 	kubeCACertPath = kubeCACertFile.Name()
 
-	helpers.RunCommandSuccessfullyWithFailureMessage(
+	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-cluster",
 		"kubectl", "config", "set-cluster", config.ClusterName,
 		fmt.Sprintf("--server=%s", config.APIServerURL),
@@ -107,19 +108,19 @@ func setKubectlConfig(config Config) {
 		"--embed-certs=true",
 	)
 
-	helpers.RunCommandSuccessfullyWithFailureMessage(
+	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-credentials",
 		"kubectl", "config", "set-credentials", config.Username, fmt.Sprintf("--token=%s", config.Password),
 	)
 
-	helpers.RunCommandSuccessfullyWithFailureMessage(
+	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-context",
 		"kubectl", "config", "set-context", config.ClusterName,
 		fmt.Sprintf("--cluster=%s", config.ClusterName),
 		fmt.Sprintf("--user=%s", config.Username),
 	)
 
-	helpers.RunCommandSuccessfullyWithFailureMessage(
+	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config use-context",
 		"kubectl", "config", "use-context", config.ClusterName,
 	)
