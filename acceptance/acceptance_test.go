@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"fmt"
+
 	. "github.com/onsi/ginkgo"
 )
 
@@ -29,7 +30,7 @@ var _ = Describe("Kubo", func() {
 		})
 
 		By("restoring", func() {
-			artifact := GetArtifactFromPath(artifactPath)
+			artifact := getArtifactFromPath(artifactPath)
 			RunCommandSuccessfullyWithFailureMessage(
 				"bbr deployment restore",
 				"bbr", "deployment", "restore", "--artifact-path", fmt.Sprintf("%s/%s", artifactPath, artifact),

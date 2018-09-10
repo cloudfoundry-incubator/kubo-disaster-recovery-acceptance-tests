@@ -128,3 +128,11 @@ func setKubectlConfig(config Config) {
 		"kubectl", "config", "use-context", clusterName,
 	)
 }
+
+func getArtifactFromPath(artifactPath string) string {
+	files, err := ioutil.ReadDir(artifactPath)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(files).To(HaveLen(1))
+
+	return files[0].Name()
+}

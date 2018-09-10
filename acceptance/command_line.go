@@ -2,11 +2,11 @@ package acceptance
 
 import (
 	"fmt"
+	"os/exec"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"io/ioutil"
-	"os/exec"
 )
 
 func RunCommandSuccessfullyWithFailureMessage(description string, cmd string, args ...string) *gexec.Session {
@@ -23,12 +23,4 @@ func runCommandWithStream(description string, cmd string, args ...string) *gexec
 	Eventually(session).Should(gexec.Exit(), "Command timed out: "+description)
 	fmt.Fprintln(GinkgoWriter, "")
 	return session
-}
-
-func GetArtifactFromPath(artifactPath string) string {
-	files, err := ioutil.ReadDir(artifactPath)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(files).To(HaveLen(1))
-
-	return files[0].Name()
 }
