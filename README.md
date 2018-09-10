@@ -19,7 +19,6 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
 
 ## Running k-DRATs locally
 
-
 1. Spin up a CFCR deployment
    - [kubo-deployment](https://github.com/cloudfoundry-incubator/kubo-deployment) is supported. Make sure you apply the [enable-bbr opsfile](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/master/manifests/ops-files/enable-bbr.yml) at deploy time to ensure the backup and restore scripts are enabled.
 1. Clone this repo
