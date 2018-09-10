@@ -1,20 +1,24 @@
 package acceptance
 
 import (
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
 	"testing"
+
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
 
 	"bytes"
 	"encoding/json"
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gexec"
 )
+
+const clusterName = "k-drats"
 
 var (
 	config         Config
@@ -101,7 +105,7 @@ func setKubectlConfig(config Config) {
 
 	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-cluster",
-		"kubectl", "config", "set-cluster", config.ClusterName,
+		"kubectl", "config", "set-cluster", clusterName,
 		fmt.Sprintf("--server=%s", config.APIServerURL),
 		fmt.Sprintf("--certificate-authority=%s", kubeCACertPath),
 		"--embed-certs=true",
@@ -114,13 +118,13 @@ func setKubectlConfig(config Config) {
 
 	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config set-context",
-		"kubectl", "config", "set-context", config.ClusterName,
-		fmt.Sprintf("--cluster=%s", config.ClusterName),
+		"kubectl", "config", "set-context", clusterName,
+		fmt.Sprintf("--cluster=%s", clusterName),
 		fmt.Sprintf("--user=%s", config.Username),
 	)
 
 	RunCommandSuccessfullyWithFailureMessage(
 		"kubectl config use-context",
-		"kubectl", "config", "use-context", config.ClusterName,
+		"kubectl", "config", "use-context", clusterName,
 	)
 }
