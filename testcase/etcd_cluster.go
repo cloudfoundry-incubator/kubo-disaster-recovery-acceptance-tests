@@ -22,6 +22,8 @@ func (EtcdCluster) BeforeBackup(Config) {}
 func (EtcdCluster) AfterBackup(Config) {}
 
 func (EtcdCluster) AfterRestore(Config) {
+	checkEtcdClusterHealth()
+
 	instances := getNumberOfEtcdInstances()
 
 	leaderGUIDs := make(map[int]string)
@@ -34,6 +36,14 @@ func (EtcdCluster) AfterRestore(Config) {
 }
 
 func (EtcdCluster) Cleanup(Config) {}
+
+func checkEtcdClusterHealth() {
+	command.RunSuccessfully(
+		"bosh ssh to run etcdctl cluster-health",
+		"bosh", "ssh", "master/0",
+		"-c", "\"sudo ETCDCTL_API=2 /var/vcap/jobs/etcd/bin/etcdctl cluster-health\"",
+	)
+}
 
 func getNumberOfEtcdInstances() int {
 	manifestSession := command.RunSuccessfullyWithoutStream(
@@ -60,8 +70,8 @@ func getNumberOfEtcdInstances() int {
 }
 
 func getEtcdLeader(index int) string {
-	session := command.RunSuccessfullyWithoutStream(
-		"bosh ssh",
+	session := command.RunSuccessfully(
+		"bosh ssh to run etcdctl member list",
 		"bosh", "ssh", fmt.Sprintf("master/%d", index),
 		"-c", "\"sudo ETCDCTL_API=2 /var/vcap/jobs/etcd/bin/etcdctl member list\"",
 	)
