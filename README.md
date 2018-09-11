@@ -30,6 +30,7 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
     ```json
     {
       "include_deployment_test_case": true,
+      "include_etcd_cluster_test_case": true,
       "timeout_in_minutes": 30,
       "api_server_url": "<k8s_api_url>",
       "ca_cert": "<k8s_ca_cert>",

@@ -3,6 +3,8 @@ package acceptance
 import (
 	"fmt"
 
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/command"
+
 	. "github.com/onsi/ginkgo"
 )
 
@@ -16,7 +18,7 @@ var _ = Describe("Kubo", func() {
 		})
 
 		By("backing up", func() {
-			RunCommandSuccessfullyWithFailureMessage(
+			command.RunSuccessfully(
 				"bbr deployment backup",
 				"bbr", "deployment", "backup", "--artifact-path", artifactPath,
 			)
@@ -31,7 +33,7 @@ var _ = Describe("Kubo", func() {
 
 		By("restoring", func() {
 			artifact := getArtifactFromPath(artifactPath)
-			RunCommandSuccessfullyWithFailureMessage(
+			command.RunSuccessfully(
 				"bbr deployment restore",
 				"bbr", "deployment", "restore", "--artifact-path", fmt.Sprintf("%s/%s", artifactPath, artifact),
 			)
@@ -51,7 +53,7 @@ var _ = Describe("Kubo", func() {
 
 	AfterEach(func() {
 		By("running bbr deployment backup-cleanup", func() {
-			RunCommandSuccessfullyWithFailureMessage(
+			command.RunSuccessfully(
 				"bbr deployment backup-cleanup",
 				"bbr", "deployment", "backup-cleanup",
 			)

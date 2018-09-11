@@ -2,6 +2,9 @@ package testcase
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/satori/go.uuid"
@@ -15,12 +18,7 @@ import (
 	tappsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"net/http"
-	"time"
 )
-
-type Deployment struct {
-}
 
 var (
 	err              error
@@ -31,6 +29,8 @@ var (
 	nginx2Deployment *v1.Deployment
 	nginx3Deployment *v1.Deployment
 )
+
+type Deployment struct{}
 
 func (t Deployment) Name() string {
 	return "deployment_test_case"

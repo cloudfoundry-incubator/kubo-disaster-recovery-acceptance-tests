@@ -3,6 +3,8 @@ package acceptance
 import (
 	"testing"
 
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/command"
+
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
 
 	"bytes"
@@ -56,6 +58,7 @@ var _ = BeforeSuite(func() {
 
 	testCases = []TestCase{
 		testcase.Deployment{},
+		testcase.EtcdCluster{},
 	}
 
 	fmt.Println("Running test cases: ")
@@ -103,7 +106,7 @@ func setKubectlConfig(config Config) {
 	Expect(err).NotTo(HaveOccurred())
 	kubeCACertPath = kubeCACertFile.Name()
 
-	RunCommandSuccessfullyWithFailureMessage(
+	command.RunSuccessfully(
 		"kubectl config set-cluster",
 		"kubectl", "config", "set-cluster", clusterName,
 		fmt.Sprintf("--server=%s", config.APIServerURL),
@@ -111,19 +114,19 @@ func setKubectlConfig(config Config) {
 		"--embed-certs=true",
 	)
 
-	RunCommandSuccessfullyWithFailureMessage(
+	command.RunSuccessfully(
 		"kubectl config set-credentials",
 		"kubectl", "config", "set-credentials", config.Username, fmt.Sprintf("--token=%s", config.Password),
 	)
 
-	RunCommandSuccessfullyWithFailureMessage(
+	command.RunSuccessfully(
 		"kubectl config set-context",
 		"kubectl", "config", "set-context", clusterName,
 		fmt.Sprintf("--cluster=%s", clusterName),
 		fmt.Sprintf("--user=%s", config.Username),
 	)
 
-	RunCommandSuccessfullyWithFailureMessage(
+	command.RunSuccessfully(
 		"kubectl config use-context",
 		"kubectl", "config", "use-context", clusterName,
 	)
