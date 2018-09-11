@@ -8,7 +8,6 @@ import (
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
 
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,11 +22,10 @@ import (
 const clusterName = "k-drats"
 
 var (
-	config         Config
 	artifactPath   string
+	kubeCACertPath string
 	testCaseConfig = testcase.Config{}
 	testCases      []TestCase
-	kubeCACertPath string
 	filter         ConfigTestCaseFilter
 )
 
@@ -37,31 +35,24 @@ func TestAcceptance(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	mustHaveEnv("BOSH_ENVIRONMENT")
-	mustHaveEnv("BOSH_CLIENT")
-	mustHaveEnv("BOSH_CLIENT_SECRET")
-	mustHaveEnv("BOSH_CA_CERT")
-	mustHaveEnv("BOSH_DEPLOYMENT")
-
+	mustHaveBoshEnvVars()
 	ensureBBR()
 
-	config = parseConfig(mustHaveEnv("CONFIG_PATH"))
+	config := NewConfig(mustHaveEnv("CONFIG_PATH"))
 	filter = NewConfigTestCaseFilter(mustHaveEnv("CONFIG_PATH"))
 
-	setKubectlConfig(config)
-
-	var err error
-	artifactPath, err = ioutil.TempDir("", "k-drats")
-	Expect(err).NotTo(HaveOccurred())
-
 	SetDefaultEventuallyTimeout(config.TimeoutMinutes * time.Minute)
+
+	artifactPath = createTempDir()
+	kubeCACertPath = writeTempFile(config.CACert)
+	configureKubectl(config, kubeCACertPath)
 
 	testCases = []TestCase{
 		testcase.Deployment{},
 		testcase.EtcdCluster{},
 	}
 
-	fmt.Println("Running test cases: ")
+	fmt.Println("Running test cases:")
 	for _, t := range filter.Filter(testCases) {
 		fmt.Println(t.Name())
 	}
@@ -69,11 +60,20 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(artifactPath)
+	err := os.RemoveAll(kubeCACertPath)
 	Expect(err).NotTo(HaveOccurred())
-	err = os.RemoveAll(kubeCACertPath)
+
+	err = os.RemoveAll(artifactPath)
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func mustHaveBoshEnvVars() {
+	mustHaveEnv("BOSH_ENVIRONMENT")
+	mustHaveEnv("BOSH_CLIENT")
+	mustHaveEnv("BOSH_CLIENT_SECRET")
+	mustHaveEnv("BOSH_CA_CERT")
+	mustHaveEnv("BOSH_DEPLOYMENT")
+}
 
 func ensureBBR() {
 	cmd := exec.Command("bbr")
@@ -82,54 +82,10 @@ func ensureBBR() {
 	Eventually(session).Should(gexec.Exit(0))
 }
 
-func parseConfig(path string) Config {
-	rawConfig, err := ioutil.ReadFile(path)
-	Expect(err).NotTo(HaveOccurred())
-
-	var config Config
-	err = json.Unmarshal(rawConfig, &config)
-	Expect(err).NotTo(HaveOccurred())
-	return config
-}
-
 func mustHaveEnv(name string) string {
 	val := os.Getenv(name)
 	Expect(val).NotTo(BeEmpty(), fmt.Sprintf("Env var '%s' not set", name))
 	return val
-}
-
-func setKubectlConfig(config Config) {
-	kubeCACertFile, err := ioutil.TempFile("", "kubeCACert")
-	Expect(err).NotTo(HaveOccurred())
-
-	_, err = kubeCACertFile.Write([]byte(config.CACert))
-	Expect(err).NotTo(HaveOccurred())
-	kubeCACertPath = kubeCACertFile.Name()
-
-	command.RunSuccessfully(
-		"kubectl config set-cluster",
-		"kubectl", "config", "set-cluster", clusterName,
-		fmt.Sprintf("--server=%s", config.APIServerURL),
-		fmt.Sprintf("--certificate-authority=%s", kubeCACertPath),
-		"--embed-certs=true",
-	)
-
-	command.RunSuccessfully(
-		"kubectl config set-credentials",
-		"kubectl", "config", "set-credentials", config.Username, fmt.Sprintf("--token=%s", config.Password),
-	)
-
-	command.RunSuccessfully(
-		"kubectl config set-context",
-		"kubectl", "config", "set-context", clusterName,
-		fmt.Sprintf("--cluster=%s", clusterName),
-		fmt.Sprintf("--user=%s", config.Username),
-	)
-
-	command.RunSuccessfully(
-		"kubectl config use-context",
-		"kubectl", "config", "use-context", clusterName,
-	)
 }
 
 func getArtifactFromPath(artifactPath string) string {
@@ -138,4 +94,58 @@ func getArtifactFromPath(artifactPath string) string {
 	Expect(files).To(HaveLen(1))
 
 	return files[0].Name()
+}
+
+func writeTempFile(content string) string {
+	tempFile, err := ioutil.TempFile("", "k-drats")
+	Expect(err).NotTo(HaveOccurred())
+
+	_, err = tempFile.Write([]byte(content))
+	Expect(err).NotTo(HaveOccurred())
+
+	return tempFile.Name()
+}
+
+func createTempDir() string {
+	path, err := ioutil.TempDir("", "k-drats")
+	Expect(err).NotTo(HaveOccurred())
+
+	return path
+}
+
+func configureKubectl(config Config, caCertPath string) {
+	command.RunSuccessfully(
+		"kubectl config set-cluster",
+		"kubectl",
+		"config",
+		"set-cluster", clusterName,
+		fmt.Sprintf("--server=%s", config.APIServerURL),
+		fmt.Sprintf("--certificate-authority=%s", caCertPath),
+		"--embed-certs=true",
+	)
+
+	command.RunSuccessfully(
+		"kubectl config set-credentials",
+		"kubectl",
+		"config",
+		"set-credentials",
+		config.Username,
+		fmt.Sprintf("--token=%s", config.Password),
+	)
+
+	command.RunSuccessfully(
+		"kubectl config set-context",
+		"kubectl",
+		"config",
+		"set-context", clusterName,
+		fmt.Sprintf("--cluster=%s", clusterName),
+		fmt.Sprintf("--user=%s", config.Username),
+	)
+
+	command.RunSuccessfully(
+		"kubectl config use-context",
+		"kubectl",
+		"config",
+		"use-context", clusterName,
+	)
 }

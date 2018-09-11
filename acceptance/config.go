@@ -1,6 +1,12 @@
 package acceptance
 
-import "time"
+import (
+	"encoding/json"
+	"io/ioutil"
+	"time"
+
+	. "github.com/onsi/gomega"
+)
 
 type Config struct {
 	TimeoutMinutes time.Duration `json:"timeout_in_minutes"`
@@ -8,4 +14,14 @@ type Config struct {
 	CACert         string        `json:"ca_cert"`
 	Username       string        `json:"username"`
 	Password       string        `json:"password"`
+}
+
+func NewConfig(path string) Config {
+	rawConfig, err := ioutil.ReadFile(path)
+	Expect(err).NotTo(HaveOccurred())
+
+	var config Config
+	err = json.Unmarshal(rawConfig, &config)
+	Expect(err).NotTo(HaveOccurred())
+	return config
 }
