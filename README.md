@@ -58,7 +58,7 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
 * `username` - K8s username
 * `password` - K8s password
 * `timeout_in_minutes` - ginkgo `Eventually` timeout in minutes, default `5`
-* `run_test_case_<test-case-name>` - flag for whether to run a given testcase, if omitted defaults to `false`
+* `run_test_case_<test-case-name>` - flag for whether to run a given test case, if omitted defaults to `false`
 
 ## Contributing to k-DRATs
 
@@ -75,7 +75,7 @@ The methods that need to be implemented are:
 * `AfterRestore(Config)` - runs after the restore is complete, and should assert that the state in the restored K8s cluster matches that created in `BeforeBackup(Config)`.
 * `Cleanup(Config)` - should clean up the state created in the K8s cluster through the test.
 
-`Config` contains the config for accessing the target K8s. *Note*: the use of this config is optional, `kubectl` is already configured to access the target K8s cluster when a testcase runs.
+`Config` contains the config for accessing the target K8s. *Note*: the use of this config is optional, `kubectl` is already configured to access the target K8s cluster when a test case runs.
 
 ### Creating a new test case
 

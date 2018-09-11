@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/kubernetes"
 
@@ -58,7 +59,7 @@ var _ = Describe("Kubo", func() {
 
 				Expect(deployments.Items).To(HaveLen(1), fmt.Sprintf("one %s deployment should exist, instead found: %#v", selector, deployments.Items))
 
-				err = k8sClient.WaitForDeployment("kube-system", deployments.Items[0].Name, GinkgoWriter)
+				err = k8sClient.WaitForDeployment("kube-system", deployments.Items[0].Name, time.Minute*1, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
@@ -79,7 +80,7 @@ var _ = Describe("Kubo", func() {
 			)
 		})
 
-		By("Running cleanup for each testcase", func() {
+		By("Running cleanup for each test case", func() {
 			for _, testCase := range testCases {
 				fmt.Println("Running the cleanup step for " + testCase.Name())
 				testCase.Cleanup(testCaseConfig)

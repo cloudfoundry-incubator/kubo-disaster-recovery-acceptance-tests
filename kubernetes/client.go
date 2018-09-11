@@ -62,13 +62,13 @@ func (c *Client) DeleteDeployment(namespace, deploymentName string) error {
 	return c.client.AppsV1().Deployments(namespace).Delete(deploymentName, &metav1.DeleteOptions{})
 }
 
-func (c *Client) WaitForDeployment(namespace, deploymentName string, writer io.Writer) error {
+func (c *Client) WaitForDeployment(namespace, deploymentName string, timeout time.Duration, writer io.Writer) error {
 	w, err := c.client.AppsV1().Deployments(namespace).Watch(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	_, err = watch.Until(1*time.Minute, w, func(event watch.Event) (bool, error) {
+	_, err = watch.Until(timeout, w, func(event watch.Event) (bool, error) {
 		deployment, ok := event.Object.(*appsv1.Deployment)
 		if !ok {
 			return false, fmt.Errorf("expected `%#v` to be of type appsv1.Deployment", event.Object)

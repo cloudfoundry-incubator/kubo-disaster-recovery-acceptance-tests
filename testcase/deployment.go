@@ -1,6 +1,8 @@
 package testcase
 
 import (
+	"time"
+
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/kubernetes"
 
 	. "github.com/onsi/ginkgo"
@@ -9,16 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
-var (
-	err                 error
-	k8sClient           *kubernetes.Client
-	DeploymentNamespace string
-	nginx1Deployment    *v1.Deployment
-	nginx2Deployment    *v1.Deployment
-	nginx3Deployment    *v1.Deployment
-)
-
-type Deployment struct{}
+type Deployment struct {
+	k8sClient        *kubernetes.Client
+	namespace        string
+	nginx1Deployment *v1.Deployment
+	nginx2Deployment *v1.Deployment
+	nginx3Deployment *v1.Deployment
+	timeout          time.Duration
+}
 
 func (t Deployment) Name() string {
 	return "deployment"
@@ -26,58 +26,63 @@ func (t Deployment) Name() string {
 
 func (t Deployment) BeforeBackup(config Config) {
 	By("Initializing K8s client", func() {
-		k8sClient, err = kubernetes.NewKubeClient()
+		var err error
+		t.k8sClient, err = kubernetes.NewKubeClient()
 		Expect(err).NotTo(HaveOccurred())
 
-		nsObject, err := k8sClient.CreateNamespace("bbr")
+		nsObject, err := t.k8sClient.CreateNamespace("bbr")
 		Expect(err).ToNot(HaveOccurred())
-		DeploymentNamespace = nsObject.Name
+		t.namespace = nsObject.Name
+
+		t.timeout = 5 * time.Minute
 	})
 
 	By("Deploying workload 1 and 2", func() {
-		nginx1Deployment = kubernetes.NewDeployment("nginx-1", kubernetes.NewNginxDeploymentSpec())
-		nginx1Deployment, err = k8sClient.CreateDeployment(DeploymentNamespace, nginx1Deployment)
+		var err error
+		t.nginx1Deployment = kubernetes.NewDeployment("nginx-1", kubernetes.NewNginxDeploymentSpec())
+		t.nginx1Deployment, err = t.k8sClient.CreateDeployment(t.namespace, t.nginx1Deployment)
 		Expect(err).ToNot(HaveOccurred())
 
-		nginx2Deployment = kubernetes.NewDeployment("nginx-2", kubernetes.NewNginxDeploymentSpec())
-		nginx2Deployment, err = k8sClient.CreateDeployment(DeploymentNamespace, nginx2Deployment)
+		t.nginx2Deployment = kubernetes.NewDeployment("nginx-2", kubernetes.NewNginxDeploymentSpec())
+		t.nginx2Deployment, err = t.k8sClient.CreateDeployment(t.namespace, t.nginx2Deployment)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx1Deployment.Name, GinkgoWriter)
+		err = t.k8sClient.WaitForDeployment(t.namespace, t.nginx1Deployment.Name, t.timeout, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx2Deployment.Name, GinkgoWriter)
+		err = t.k8sClient.WaitForDeployment(t.namespace, t.nginx2Deployment.Name, t.timeout, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
 
 func (t Deployment) AfterBackup(config Config) {
 	By("Deleting workload 2", func() {
-		err = k8sClient.DeleteDeployment(DeploymentNamespace, nginx2Deployment.Name)
+		err := t.k8sClient.DeleteDeployment(t.namespace, t.nginx2Deployment.Name)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
 	By("Deploying workload 3", func() {
-		nginx3Deployment = kubernetes.NewDeployment("nginx-3", kubernetes.NewNginxDeploymentSpec())
-		nginx3Deployment, err = k8sClient.CreateDeployment(DeploymentNamespace, nginx3Deployment)
+		var err error
+		t.nginx3Deployment = kubernetes.NewDeployment("nginx-3", kubernetes.NewNginxDeploymentSpec())
+		t.nginx3Deployment, err = t.k8sClient.CreateDeployment(t.namespace, t.nginx3Deployment)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx3Deployment.Name, GinkgoWriter)
+		err = t.k8sClient.WaitForDeployment(t.namespace, t.nginx3Deployment.Name, t.timeout, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
 
 func (t Deployment) AfterRestore(config Config) {
 	By("Waiting for workloads 1 and 2 to be available", func() {
-		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx1Deployment.Name, GinkgoWriter)
+		err := t.k8sClient.WaitForDeployment(t.namespace, t.nginx1Deployment.Name, t.timeout, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx2Deployment.Name, GinkgoWriter)
+		err = t.k8sClient.WaitForDeployment(t.namespace, t.nginx2Deployment.Name, t.timeout, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	By("Asserting that workload 3 is gone", func() {
-		_, err = k8sClient.GetDeployment(DeploymentNamespace, nginx3Deployment.Name)
+		_, err := t.k8sClient.GetDeployment(t.namespace, t.nginx3Deployment.Name)
 		Expect(err).To(HaveOccurred())
 
 		statusErr, ok := err.(*errors.StatusError)
@@ -88,7 +93,7 @@ func (t Deployment) AfterRestore(config Config) {
 
 func (t Deployment) Cleanup(config Config) {
 	By("Deleting the test namespace", func() {
-		err := k8sClient.DeleteNamespace(DeploymentNamespace)
+		err := t.k8sClient.DeleteNamespace(t.namespace)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
