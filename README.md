@@ -80,5 +80,4 @@ The methods that need to be implemented are:
 ### Creating a new test case
 
 1. Create a new test case in the [testcases package](https://github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/tree/master/testcases).
-1. Add the newly created test case to `[]TestCase` in the `BeforeSuite` in [`acceptance_suite_test.go`](https://github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/blob/master/acceptance/acceptance_suite_test.go).
-
+1. Add the newly created test case to the list of `availableTestCases` in [`acceptance_suite_test.go`](https://github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/blob/master/acceptance/acceptance_suite_test.go).

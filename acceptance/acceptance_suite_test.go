@@ -26,8 +26,13 @@ var (
 	kubeCACertPath string
 	testCaseConfig = testcase.Config{}
 	testCases      []TestCase
-	filter         ConfigTestCaseFilter
+	filter         TestCaseFilter
 )
+
+var availableTestCases = []TestCase{
+	testcase.Deployment{},
+	testcase.EtcdCluster{},
+}
 
 func TestAcceptance(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -39,21 +44,17 @@ var _ = BeforeSuite(func() {
 	ensureBBR()
 
 	config := NewConfig(mustHaveEnv("CONFIG_PATH"))
-	filter = NewConfigTestCaseFilter(mustHaveEnv("CONFIG_PATH"))
+	filter = NewTestCaseFilter(mustHaveEnv("CONFIG_PATH"))
+	testCases = filter.Filter(availableTestCases)
 
 	SetDefaultEventuallyTimeout(config.TimeoutMinutes * time.Minute)
 
 	artifactPath = createTempDir()
 	kubeCACertPath = writeTempFile(config.CACert)
-	configureKubectl(config, kubeCACertPath)
-
-	testCases = []TestCase{
-		testcase.Deployment{},
-		testcase.EtcdCluster{},
-	}
+	configureKubectl(config.APIServerURL, config.Username, config.Password, kubeCACertPath)
 
 	fmt.Println("Running test cases:")
-	for _, t := range filter.Filter(testCases) {
+	for _, t := range testCases {
 		fmt.Println(t.Name())
 	}
 	fmt.Println("")
@@ -113,13 +114,13 @@ func createTempDir() string {
 	return path
 }
 
-func configureKubectl(config Config, caCertPath string) {
+func configureKubectl(apiServerURL, username, password, caCertPath string) {
 	command.RunSuccessfully(
 		"kubectl config set-cluster",
 		"kubectl",
 		"config",
 		"set-cluster", clusterName,
-		fmt.Sprintf("--server=%s", config.APIServerURL),
+		fmt.Sprintf("--server=%s", apiServerURL),
 		fmt.Sprintf("--certificate-authority=%s", caCertPath),
 		"--embed-certs=true",
 	)
@@ -129,8 +130,8 @@ func configureKubectl(config Config, caCertPath string) {
 		"kubectl",
 		"config",
 		"set-credentials",
-		config.Username,
-		fmt.Sprintf("--token=%s", config.Password),
+		username,
+		fmt.Sprintf("--token=%s", password),
 	)
 
 	command.RunSuccessfully(
@@ -139,7 +140,7 @@ func configureKubectl(config Config, caCertPath string) {
 		"config",
 		"set-context", clusterName,
 		fmt.Sprintf("--cluster=%s", clusterName),
-		fmt.Sprintf("--user=%s", config.Username),
+		fmt.Sprintf("--user=%s", username),
 	)
 
 	command.RunSuccessfully(
