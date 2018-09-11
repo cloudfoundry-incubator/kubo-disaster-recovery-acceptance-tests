@@ -33,7 +33,7 @@ var (
 type Deployment struct{}
 
 func (t Deployment) Name() string {
-	return "deployment_test_case"
+	return "deployment"
 }
 
 func (t Deployment) BeforeBackup(config Config) {

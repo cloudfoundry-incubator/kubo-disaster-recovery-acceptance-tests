@@ -35,7 +35,7 @@ func (f TestCaseFilter) Filter(testCases []TestCase) []TestCase {
 }
 
 func (f TestCaseFilter) getFlagValue(testCaseName string) bool {
-	flagName := fmt.Sprintf("include_%s", testCaseName)
+	flagName := fmt.Sprintf("run_test_case_%s", testCaseName)
 
 	flagValue, isDefined := f[flagName]
 	if !isDefined {

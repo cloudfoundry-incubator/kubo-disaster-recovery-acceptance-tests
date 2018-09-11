@@ -14,7 +14,7 @@ import (
 type EtcdCluster struct{}
 
 func (EtcdCluster) Name() string {
-	return "etcd_cluster_test_case"
+	return "etcd_cluster"
 }
 
 func (EtcdCluster) BeforeBackup(Config) {}
