@@ -1,33 +1,21 @@
 package testcase
 
 import (
-	"fmt"
-	"net/http"
-	"time"
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/kubernetes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/satori/go.uuid"
 	"k8s.io/api/apps/v1"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	tappsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
-	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
-	err              error
-	k8s              kubernetes.Interface
-	namespace        string
-	deploymentApi    tappsv1.DeploymentInterface
-	nginx1Deployment *v1.Deployment
-	nginx2Deployment *v1.Deployment
-	nginx3Deployment *v1.Deployment
+	err                 error
+	k8sClient           *kubernetes.Client
+	DeploymentNamespace string
+	nginx1Deployment    *v1.Deployment
+	nginx2Deployment    *v1.Deployment
+	nginx3Deployment    *v1.Deployment
 )
 
 type Deployment struct{}
@@ -38,84 +26,58 @@ func (t Deployment) Name() string {
 
 func (t Deployment) BeforeBackup(config Config) {
 	By("Initializing K8s client", func() {
-		k8s, err = newKubeClient()
+		k8sClient, err = kubernetes.NewKubeClient()
 		Expect(err).NotTo(HaveOccurred())
 
-		nsObject, err := createTestNamespace(k8s, "bbr")
+		nsObject, err := k8sClient.CreateNamespace("bbr")
 		Expect(err).ToNot(HaveOccurred())
-		namespace = nsObject.Name
-		deploymentApi = k8s.AppsV1().Deployments(namespace)
+		DeploymentNamespace = nsObject.Name
 	})
 
 	By("Deploying workload 1 and 2", func() {
-		nginx1Deployment = newDeployment("nginx-1", getNginxDeploymentSpec())
-		nginx1Deployment, err = deploymentApi.Create(nginx1Deployment)
+		nginx1Deployment = kubernetes.NewDeployment("nginx-1", kubernetes.NewNginxDeploymentSpec())
+		nginx1Deployment, err = k8sClient.CreateDeployment(DeploymentNamespace, nginx1Deployment)
 		Expect(err).ToNot(HaveOccurred())
 
-		nginx2Deployment = newDeployment("nginx-2", getNginxDeploymentSpec())
-		nginx2Deployment, err = deploymentApi.Create(nginx2Deployment)
+		nginx2Deployment = kubernetes.NewDeployment("nginx-2", kubernetes.NewNginxDeploymentSpec())
+		nginx2Deployment, err = k8sClient.CreateDeployment(DeploymentNamespace, nginx2Deployment)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = waitForDeployment(deploymentApi, namespace, nginx1Deployment.Name)
+		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx1Deployment.Name, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = waitForDeployment(deploymentApi, namespace, nginx2Deployment.Name)
+		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx2Deployment.Name, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
 
 func (t Deployment) AfterBackup(config Config) {
 	By("Deleting workload 2", func() {
-		err = deploymentApi.Delete(nginx2Deployment.Name, &metav1.DeleteOptions{})
+		err = k8sClient.DeleteDeployment(DeploymentNamespace, nginx2Deployment.Name)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
 	By("Deploying workload 3", func() {
-		nginx3Deployment = newDeployment("nginx-3", getNginxDeploymentSpec())
-		nginx3Deployment, err = k8s.AppsV1().Deployments(namespace).Create(nginx3Deployment)
+		nginx3Deployment = kubernetes.NewDeployment("nginx-3", kubernetes.NewNginxDeploymentSpec())
+		nginx3Deployment, err = k8sClient.CreateDeployment(DeploymentNamespace, nginx3Deployment)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = waitForDeployment(deploymentApi, namespace, nginx3Deployment.Name)
+		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx3Deployment.Name, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
 
 func (t Deployment) AfterRestore(config Config) {
-	By("Waiting for API to be available", func() {
-		Eventually(func() bool {
-			var status int
-			k8s.CoreV1().RESTClient().Get().RequestURI("/healthz").Do().StatusCode(&status)
-			if status == http.StatusOK {
-				return true
-			}
-			return false
-		}, "60s", "5s").Should(BeTrue())
-
-	})
-
-	By("Waiting for system workloads", func() {
-		expectedSelector := []string{"kube-dns", "heapster", "kubernetes-dashboard", "influxdb"}
-
-		systemDeploymentApi := k8s.AppsV1().Deployments("kube-system")
-		for _, selector := range expectedSelector {
-			deployment, err := getDeploymentName(k8s, "kube-system", "k8s-app="+selector)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = waitForDeployment(systemDeploymentApi, "kube-system", deployment)
-			Expect(err).NotTo(HaveOccurred())
-		}
-	})
-
 	By("Waiting for workloads 1 and 2 to be available", func() {
-		err = waitForDeployment(deploymentApi, namespace, nginx1Deployment.Name)
+		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx1Deployment.Name, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = waitForDeployment(deploymentApi, namespace, nginx2Deployment.Name)
+		err = k8sClient.WaitForDeployment(DeploymentNamespace, nginx2Deployment.Name, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	By("Asserting that workload 3 is gone", func() {
-		_, err = deploymentApi.Get(nginx3Deployment.Name, metav1.GetOptions{})
+		_, err = k8sClient.GetDeployment(DeploymentNamespace, nginx3Deployment.Name)
 		Expect(err).To(HaveOccurred())
 
 		statusErr, ok := err.(*errors.StatusError)
@@ -126,96 +88,7 @@ func (t Deployment) AfterRestore(config Config) {
 
 func (t Deployment) Cleanup(config Config) {
 	By("Deleting the test namespace", func() {
-		err := k8s.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
+		err := k8sClient.DeleteNamespace(DeploymentNamespace)
 		Expect(err).NotTo(HaveOccurred())
 	})
-}
-
-func getDeploymentName(k8s kubernetes.Interface, namespace, selector string) (string, error) {
-	deployments, err := k8s.AppsV1().Deployments(namespace).List(metav1.ListOptions{LabelSelector: selector})
-	if err != nil {
-		return "", err
-	}
-	if len(deployments.Items) != 1 {
-		return "", fmt.Errorf("one %s deployment should exist, instead found: %#v", selector, deployments.Items)
-	}
-	return deployments.Items[0].Name, nil
-}
-
-func newKubeClient() (kubernetes.Interface, error) {
-	config, err := readKubeConfig()
-	if err != nil {
-		return nil, err
-	}
-	return kubernetes.NewForConfig(config)
-}
-
-func readKubeConfig() (*restclient.Config, error) {
-	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&clientcmd.ConfigOverrides{},
-	).ClientConfig()
-}
-
-func createTestNamespace(k8s kubernetes.Interface, prefix string) (*corev1.Namespace, error) {
-	name := prefix + "-" + uuid.NewV4().String()
-	labels := make(map[string]string)
-	labels["test"] = prefix
-	namespaceObject := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels}}
-	return k8s.CoreV1().Namespaces().Create(&namespaceObject)
-}
-
-func newDeployment(name string, spec appsv1.DeploymentSpec) *appsv1.Deployment {
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{Name: name},
-		Spec:       spec,
-	}
-}
-
-func getNginxDeploymentSpec() appsv1.DeploymentSpec {
-	nginxPodSpec := corev1.PodSpec{
-		Containers: []corev1.Container{{
-			Name:  "nginx",
-			Image: "nginx",
-			Ports: []corev1.ContainerPort{{ContainerPort: 80}},
-		}},
-	}
-	var replicas int32
-	replicas = 1
-	labelMap := make(map[string]string)
-	labelMap["app"] = "nginx"
-
-	return appsv1.DeploymentSpec{
-		Replicas: &replicas,
-		Selector: &metav1.LabelSelector{MatchLabels: labelMap},
-		Template: corev1.PodTemplateSpec{ObjectMeta: metav1.ObjectMeta{Labels: labelMap}, Spec: nginxPodSpec}}
-}
-
-func waitForDeployment(deploymentAPI tappsv1.DeploymentInterface, namespace string, deploymentName string) error {
-	w, err := deploymentAPI.Watch(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	_, err = watch.Until(1*time.Minute, w, func(event watch.Event) (bool, error) {
-		deployment, ok := event.Object.(*appsv1.Deployment)
-		if !ok {
-			return false, fmt.Errorf("expected `%#v` to be of type appsv1.Deployment", event.Object)
-		}
-
-		if deployment.Name == deploymentName {
-			if deployment.Status.AvailableReplicas == deployment.Status.UpdatedReplicas {
-				return true, nil
-			}
-			fmt.Fprintf(GinkgoWriter, "Expected %d to be equal to %d\n", deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
-		}
-
-		return false, nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("deployment `%s` did not finish rolling out with error: %s", deploymentName, err)
-	}
-
-	return nil
 }

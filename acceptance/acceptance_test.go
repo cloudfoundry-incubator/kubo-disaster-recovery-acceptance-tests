@@ -3,9 +3,12 @@ package acceptance
 import (
 	"fmt"
 
+	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/kubernetes"
+
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/command"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Kubo", func() {
@@ -39,8 +42,28 @@ var _ = Describe("Kubo", func() {
 			)
 		})
 
-		By("waiting for kubo api to be available", func() {
-			fmt.Println("wait for kubo api")
+		k8sClient, err := kubernetes.NewKubeClient()
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Waiting for API to be available", func() {
+			Eventually(func() bool {
+				return k8sClient.IsHealthy()
+			}, "60s", "5s").Should(BeTrue())
+
+		})
+
+		By("Waiting for system workloads", func() {
+			expectedSelector := []string{"kube-dns", "heapster", "kubernetes-dashboard", "influxdb"}
+
+			for _, selector := range expectedSelector {
+				deployments, err := k8sClient.GetDeployments("kube-system", "k8s-app="+selector)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(deployments.Items).To(HaveLen(1), fmt.Sprintf("one %s deployment should exist, instead found: %#v", selector, deployments.Items))
+
+				err = k8sClient.WaitForDeployment("kube-system", deployments.Items[0].Name, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+			}
 		})
 
 		By("running the after restore step", func() {
