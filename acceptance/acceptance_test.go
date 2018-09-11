@@ -46,10 +46,7 @@ var _ = Describe("Kubo", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for API to be available", func() {
-			Eventually(func() bool {
-				return k8sClient.IsHealthy()
-			}, "60s", "5s").Should(BeTrue())
-
+			Eventually(k8sClient.IsHealthy).Should(BeTrue())
 		})
 
 		By("Waiting for system workloads", func() {

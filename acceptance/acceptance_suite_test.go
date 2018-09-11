@@ -54,6 +54,7 @@ var _ = BeforeSuite(func() {
 	fmt.Println("")
 
 	SetDefaultEventuallyTimeout(time.Minute * config.TimeoutMinutes)
+	SetDefaultEventuallyPollingInterval(time.Second * 5)
 	fmt.Printf("Timeout: %d min\n\n", config.TimeoutMinutes)
 
 	artifactPath = createTempDir()
