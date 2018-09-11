@@ -59,12 +59,6 @@ var _ = BeforeSuite(func() {
 	artifactPath = createTempDir()
 	kubeCACertPath = writeTempFile(config.CACert)
 	configureKubectl(config.APIServerURL, config.Username, config.Password, kubeCACertPath)
-
-	fmt.Println("Running test cases:")
-	for _, t := range testCases {
-		fmt.Println(t.Name())
-	}
-	fmt.Println("")
 })
 
 var _ = AfterSuite(func() {
