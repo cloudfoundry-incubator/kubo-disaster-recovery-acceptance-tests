@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/command"
 
@@ -12,7 +13,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -47,7 +47,14 @@ var _ = BeforeSuite(func() {
 	filter = NewTestCaseFilter(mustHaveEnv("CONFIG_PATH"))
 	testCases = filter.Filter(availableTestCases)
 
-	SetDefaultEventuallyTimeout(config.TimeoutMinutes * time.Minute)
+	fmt.Println("Running test cases:")
+	for _, t := range testCases {
+		fmt.Println("* ", t.Name())
+	}
+	fmt.Println("")
+
+	SetDefaultEventuallyTimeout(time.Minute * config.TimeoutMinutes)
+	fmt.Printf("Timeout: %d min\n\n", config.TimeoutMinutes)
 
 	artifactPath = createTempDir()
 	kubeCACertPath = writeTempFile(config.CACert)

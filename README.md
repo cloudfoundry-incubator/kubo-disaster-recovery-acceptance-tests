@@ -31,7 +31,7 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
     {
       "run_test_case_deployment": true,
       "run_test_case_etcd_cluster": true,
-      "timeout_in_minutes": 30,
+      "timeout_in_minutes": 5,
       "api_server_url": "<k8s_api_url>",
       "ca_cert": "<k8s_ca_cert>",
       "username": "<k8s_username>",
@@ -53,11 +53,11 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
 
 ## Config Variables
 
-* `api_server_url` - Url of K8s api server
-* `ca_cert` - K8s CA cert
+* `api_server_url` - K8s API server URL
+* `ca_cert` - K8s CA certificate
 * `username` - K8s username
 * `password` - K8s password
-* `timeout_in_minutes` - default ginkgo `Eventually` timeout in minutes
+* `timeout_in_minutes` - ginkgo `Eventually` timeout in minutes, default `5`
 * `run_test_case_<test-case-name>` - flag for whether to run a given testcase, if omitted defaults to `false`
 
 ## Contributing to k-DRATs
