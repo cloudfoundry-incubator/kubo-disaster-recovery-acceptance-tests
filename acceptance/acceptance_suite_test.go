@@ -30,8 +30,8 @@ var (
 )
 
 var availableTestCases = []TestCase{
-	testcase.Deployment{},
-	testcase.EtcdCluster{},
+	testcase.NewDeployment(),
+	testcase.NewEtcdCluster(),
 }
 
 func TestAcceptance(t *testing.T) {

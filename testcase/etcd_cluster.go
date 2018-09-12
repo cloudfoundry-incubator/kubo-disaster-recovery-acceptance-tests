@@ -17,6 +17,10 @@ func (EtcdCluster) Name() string {
 	return "etcd_cluster"
 }
 
+func NewEtcdCluster() EtcdCluster {
+	return EtcdCluster{}
+}
+
 func (EtcdCluster) BeforeBackup(Config) {}
 
 func (EtcdCluster) AfterBackup(Config) {}

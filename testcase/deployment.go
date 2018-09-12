@@ -20,11 +20,15 @@ type Deployment struct {
 	timeout          time.Duration
 }
 
-func (t Deployment) Name() string {
+func NewDeployment() *Deployment {
+	return &Deployment{}
+}
+
+func (t *Deployment) Name() string {
 	return "deployment"
 }
 
-func (t Deployment) BeforeBackup(config Config) {
+func (t *Deployment) BeforeBackup(config Config) {
 	By("Initializing K8s client", func() {
 		var err error
 		t.k8sClient, err = kubernetes.NewKubeClient()
@@ -55,7 +59,7 @@ func (t Deployment) BeforeBackup(config Config) {
 	})
 }
 
-func (t Deployment) AfterBackup(config Config) {
+func (t *Deployment) AfterBackup(config Config) {
 	By("Deleting workload 2", func() {
 		err := t.k8sClient.DeleteDeployment(t.namespace, t.nginx2Deployment.Name)
 		Expect(err).ToNot(HaveOccurred())
@@ -72,7 +76,7 @@ func (t Deployment) AfterBackup(config Config) {
 	})
 }
 
-func (t Deployment) AfterRestore(config Config) {
+func (t *Deployment) AfterRestore(config Config) {
 	By("Waiting for workloads 1 and 2 to be available", func() {
 		err := t.k8sClient.WaitForDeployment(t.namespace, t.nginx1Deployment.Name, t.timeout, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
@@ -91,7 +95,7 @@ func (t Deployment) AfterRestore(config Config) {
 	})
 }
 
-func (t Deployment) Cleanup(config Config) {
+func (t *Deployment) Cleanup(config Config) {
 	By("Deleting the test namespace", func() {
 		err := t.k8sClient.DeleteNamespace(t.namespace)
 		Expect(err).NotTo(HaveOccurred())
