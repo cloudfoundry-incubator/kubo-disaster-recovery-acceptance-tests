@@ -32,6 +32,7 @@ var (
 var availableTestCases = []TestCase{
 	testcase.NewDeployment(),
 	testcase.NewEtcdCluster(),
+	testcase.NewPodHealth(),
 }
 
 func TestAcceptance(t *testing.T) {
