@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 
 	. "github.com/onsi/gomega"
 )
@@ -11,7 +12,10 @@ import (
 type TestCaseFilter map[string]interface{}
 
 func NewTestCaseFilter(path string) TestCaseFilter {
-	rawConfig, err := ioutil.ReadFile(path)
+	if path == "" {
+		return nil
+	}
+	rawConfig, err := ioutil.ReadFile(filepath.Clean(path))
 	Expect(err).NotTo(HaveOccurred())
 
 	filter := TestCaseFilter{}
