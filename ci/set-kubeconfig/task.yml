@@ -11,17 +11,14 @@ inputs:
 - name: kubo-disaster-recovery-acceptance-tests
 - name: terraform
 - name: bbl-state
-- name: k-drats-config
-
 outputs:
-- name: updated-k-drats-config
+- name: kubeconfig
 
 params:
-  CONFIG_PATH: # Path to config in k-drats-config resource
   BBL_STATE_DIR:  # Path to bbl state inside bbl-state resource
   KUBO_USERNAME: admin
   BOSH_DIRECTOR_NAME:  # Top level of path to credhub secrets
   BOSH_DEPLOYMENT:  # Second level of path to credhub secrets
 
 run:
-  path: kubo-disaster-recovery-acceptance-tests/ci/add-credentials-to-config/task.sh
+  path: kubo-disaster-recovery-acceptance-tests/ci/set-kubeconfig/task.sh
