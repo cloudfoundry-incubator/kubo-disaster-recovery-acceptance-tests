@@ -12,6 +12,7 @@ inputs:
 - name: bbr-binary-release
 - name: k-drats-config
 - name: bbl-state
+- name: kubeconfig
 
 params:
   CONFIG_PATH: config.json # Path to config in k-drats-config resource

@@ -44,9 +44,12 @@ var _ = BeforeSuite(func() {
 	mustHaveBoshEnvVars()
 	ensureBBR()
 
-	config := NewConfig(mustHaveEnv("CONFIG_PATH"))
-	filter = NewTestCaseFilter(mustHaveEnv("CONFIG_PATH"))
-	testCases = filter.Filter(availableTestCases)
+	testCases = availableTestCases
+	config := NewConfig(os.Getenv("CONFIG_PATH"))
+	filter = NewTestCaseFilter(os.Getenv("CONFIG_PATH"))
+	if filter != nil {
+		testCases = filter.Filter(availableTestCases)
+	}
 
 	fmt.Println("Running test cases:")
 	for _, t := range testCases {
@@ -57,17 +60,11 @@ var _ = BeforeSuite(func() {
 	SetDefaultEventuallyTimeout(time.Minute * config.TimeoutMinutes)
 	SetDefaultEventuallyPollingInterval(time.Second * 5)
 	fmt.Printf("Timeout: %d min\n\n", config.TimeoutMinutes)
-
 	artifactPath = createTempDir()
-	kubeCACertPath = writeTempFile(config.CACert)
-	configureKubectl(config.APIServerURL, config.Username, config.Password, kubeCACertPath)
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(kubeCACertPath)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = os.RemoveAll(artifactPath)
+	err := os.RemoveAll(artifactPath)
 	Expect(err).NotTo(HaveOccurred())
 })
 
