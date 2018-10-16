@@ -14,7 +14,7 @@ cluster_name=k-drats
 echo "$ca_cert" > ca_cert
 chmod 600 ca_cert
 
-kubectl config set-cluster $cluster_name --server=$api_server_ip --certificate-authority=ca_cert --embed-certs=true
+kubectl config set-cluster $cluster_name --server=https://$api_server_ip:8443 --certificate-authority=ca_cert --embed-certs=true
 kubectl config set-credentials $KUBO_USERNAME --token=$password
 kubectl config set-context $cluster_name --cluster=$cluster_name --user=$KUBO_USERNAME
 kubectl config use-context $cluster_name
