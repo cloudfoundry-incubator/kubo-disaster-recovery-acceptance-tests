@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/command"
-
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/testcase"
 
 	"bytes"
@@ -18,8 +16,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
-
-const clusterName = "k-drats"
 
 var (
 	artifactPath   string
@@ -97,56 +93,9 @@ func getArtifactFromPath(artifactPath string) string {
 	return files[0].Name()
 }
 
-func writeTempFile(content string) string {
-	tempFile, err := ioutil.TempFile("", "k-drats")
-	Expect(err).NotTo(HaveOccurred())
-
-	_, err = tempFile.Write([]byte(content))
-	Expect(err).NotTo(HaveOccurred())
-
-	return tempFile.Name()
-}
-
 func createTempDir() string {
 	path, err := ioutil.TempDir("", "k-drats")
 	Expect(err).NotTo(HaveOccurred())
 
 	return path
-}
-
-func configureKubectl(apiServerURL, username, password, caCertPath string) {
-	command.RunSuccessfully(
-		"kubectl config set-cluster",
-		"kubectl",
-		"config",
-		"set-cluster", clusterName,
-		fmt.Sprintf("--server=%s", apiServerURL),
-		fmt.Sprintf("--certificate-authority=%s", caCertPath),
-		"--embed-certs=true",
-	)
-
-	command.RunSuccessfully(
-		"kubectl config set-credentials",
-		"kubectl",
-		"config",
-		"set-credentials",
-		username,
-		fmt.Sprintf("--token=%s", password),
-	)
-
-	command.RunSuccessfully(
-		"kubectl config set-context",
-		"kubectl",
-		"config",
-		"set-context", clusterName,
-		fmt.Sprintf("--cluster=%s", clusterName),
-		fmt.Sprintf("--user=%s", username),
-	)
-
-	command.RunSuccessfully(
-		"kubectl config use-context",
-		"kubectl",
-		"config",
-		"use-context", clusterName,
-	)
 }
