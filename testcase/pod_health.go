@@ -68,7 +68,7 @@ func (p *PodHealth) AfterRestore(config Config) {
 	})
 
 	By("Allowing commands to be executed on the container", func() {
-		args := []string{"get", "pods", "-l", "status.phase=Running,app=" + p.deployment.Name, "-o", "jsonpath={.items[0].metadata.name}"}
+		args := []string{"get", "pods", "-l", "app="+p.deployment.Name, "--field-selector=status.phase=Running", "-o", "jsonpath={.items[0].metadata.name}"}
 		session := runKubectlCommandInNamespace(p.namespace, args...)
 		Eventually(session, "15s").Should(gexec.Exit(0))
 		podName = string(session.Out.Contents())
