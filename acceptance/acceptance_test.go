@@ -51,7 +51,7 @@ var _ = Describe("Kubo", func() {
 		})
 
 		By("Waiting for system workloads", func() {
-			expectedSelector := []string{"kube-dns", "heapster", "kubernetes-dashboard", "influxdb"}
+			expectedSelector := []string{"kube-dns", "kubernetes-dashboard"}
 
 			for _, selector := range expectedSelector {
 				deployments, err := k8sClient.GetDeployments("kube-system", "k8s-app="+selector)
