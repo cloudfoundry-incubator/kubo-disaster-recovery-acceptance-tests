@@ -31,11 +31,7 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
     {
       "run_test_case_deployment": true,
       "run_test_case_etcd_cluster": true,
-      "timeout_in_minutes": 5,
-      "api_server_url": "<k8s_api_url>",
-      "ca_cert": "<k8s_ca_cert>",
-      "username": "<k8s_username>",
-      "password": "<k8s_password>"
+      "timeout_in_minutes": 5
     }
     ```
 1. Export `CONFIG_PATH` to be path to `config.json` file you just created.
@@ -53,10 +49,6 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
 
 ## Config Variables
 
-* `api_server_url` - K8s API server URL
-* `ca_cert` - K8s CA certificate
-* `username` - K8s username
-* `password` - K8s password
 * `timeout_in_minutes` - ginkgo `Eventually` timeout in minutes, default `5`
 * `run_test_case_<test-case-name>` - flag for whether to run a given test case, if omitted defaults to `false`
 
