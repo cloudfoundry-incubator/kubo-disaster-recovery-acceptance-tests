@@ -13,7 +13,7 @@ The acceptance test suite provides hooks around `bbr director backup` and `bbr d
 
 ## Running k-DRATs in your pipelines
 
-We encourage you to use our [`run-k-drats-master` CI task](https://github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/tree/master/ci/run-k-drats) to run k-DRATS in your Concourse pipeline.
+We encourage you to use our [`set-kubconfig`](https://github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/tree/master/ci/set-kubeconfig) and [`run-k-drats`](https://github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/tree/master/ci/run-k-drats) CI tasks to run k-DRATS in your Concourse pipeline.
 
 Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundry-incubator/backup-and-restore-ci/blob/master/pipelines/k-drats/pipeline.yml) for a working example.
 
@@ -40,8 +40,16 @@ Please refer to our k-drats [pipeline definition](https://github.com/cloudfoundr
    - `BOSH_CLIENT` - BOSH Director username
    - `BOSH_CLIENT_SECRET` - BOSH Director password
    - `BOSH_CA_CERT` - BOSH Director's CA cert content
-   - `BOSH_ALL_PROXY` - optional, set the proxy to be used in case the BOSH director is behind a jumpbox 
+   - `BOSH_ALL_PROXY` - optional, set the proxy to be used in case the BOSH director is behind a jumpbox
    - `BOSH_DEPLOYMENT` - name of the CFCR deployment to backup and restore
+1. Configure `kubectl` with a cluster and admin credentials, for example:
+    ```bash
+    $ kubectl config set-cluster CLUSTER_NAME --server=https://API_IP:8443 --certificate-authority=PATH/TO/CA_CERT --embed-certs=true
+    $ kubectl config set-credentials ADMIN_USERNAME --token=ADMIN_PASSWORD
+    $ kubectl config set-context NAME --cluster=CLUSTER_NAME --user=ADMIN_USERNAME
+    $ kubectl config use-context NAME
+    ```
+1. Export `KUBECONFIG` to the path to the `kubectl` config, for example `~/.kube/config`.
 1. Run acceptance tests
     ```bash
     $ ./scripts/_run_acceptance_tests.sh
