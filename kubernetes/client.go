@@ -9,7 +9,10 @@ import (
 	"github.com/satori/go.uuid"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -44,7 +47,9 @@ func (c *Client) CreateNamespace(prefix string) (*corev1.Namespace, error) {
 }
 
 func (c *Client) DeleteNamespace(namespace string) error {
-	return c.client.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
+	var gracePeriod int64
+	gracePeriod = 0
+	return c.client.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 }
 
 func (c *Client) CreateDeployment(namespace string, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
@@ -90,6 +95,38 @@ func (c *Client) WaitForDeployment(namespace, deploymentName string, timeout tim
 	}
 
 	return nil
+}
+
+func (c *Client) CreateServiceAccount(namespace string, serviceAccount *corev1.ServiceAccount) (*corev1.ServiceAccount, error) {
+	return c.client.CoreV1().ServiceAccounts(namespace).Create(serviceAccount)
+}
+
+func (c *Client) DeleteServiceAccount(namespace string, serviceAccountName string) error {
+	return c.client.CoreV1().ServiceAccounts(namespace).Delete(serviceAccountName, &metav1.DeleteOptions{})
+}
+
+func (c *Client) CreatePodSecurityPolicy(podSecurityPolicy *policyv1.PodSecurityPolicy) (*policyv1.PodSecurityPolicy, error) {
+	return c.client.PolicyV1beta1().PodSecurityPolicies().Create(podSecurityPolicy)
+}
+
+func (c *Client) DeletePodSecurityPolicy(podSecurityPolicyName string) error {
+	return c.client.PolicyV1beta1().PodSecurityPolicies().Delete(podSecurityPolicyName, &metav1.DeleteOptions{})
+}
+
+func (c *Client) CreateRole(namespace string, role *rbac.Role) (*rbac.Role, error) {
+	return c.client.RbacV1().Roles(namespace).Create(role)
+}
+
+func (c *Client) DeleteRole(namespace, roleName string) error {
+	return c.client.RbacV1().Roles(namespace).Delete(roleName, &metav1.DeleteOptions{})
+}
+
+func (c *Client) CreateRoleBinding(namespace string, roleBinding *rbac.RoleBinding) (*rbac.RoleBinding, error) {
+	return c.client.RbacV1().RoleBindings(namespace).Create(roleBinding)
+}
+
+func (c *Client) DeleteRoleBinding(namespace, roleBindingName string) error {
+	return c.client.RbacV1().RoleBindings(namespace).Delete(roleBindingName, &metav1.DeleteOptions{})
 }
 
 func (c *Client) IsHealthy() bool {

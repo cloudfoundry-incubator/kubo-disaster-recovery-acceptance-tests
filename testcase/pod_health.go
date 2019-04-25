@@ -16,10 +16,14 @@ import (
 )
 
 type PodHealth struct {
-	k8sClient  *kubernetes.Client
-	namespace  string
-	deployment *v1.Deployment
-	timeout    time.Duration
+	k8sClient             *kubernetes.Client
+	namespace             string
+	deployment            *v1.Deployment
+	timeout               time.Duration
+	serviceAccountName    string
+	podSecurityPolicyName string
+	roleName              string
+	roleBindingName       string
 }
 
 func (PodHealth) Name() string {
@@ -38,14 +42,31 @@ func (p *PodHealth) BeforeBackup(config Config) {
 
 		nsObject, err := p.k8sClient.CreateNamespace("bbr")
 		Expect(err).ToNot(HaveOccurred())
-
 		p.namespace = nsObject.Name
 		p.timeout = 5 * time.Minute
 	})
 
+	By("Creating a service account with PSP privileges", func() {
+		p.serviceAccountName = "pod-health"
+		_, err := p.k8sClient.CreateServiceAccount(p.namespace, kubernetes.NewServiceAccount(p.serviceAccountName))
+		Expect(err).ToNot(HaveOccurred())
+
+		p.podSecurityPolicyName = "pod-health-psp"
+		_, err = p.k8sClient.CreatePodSecurityPolicy(kubernetes.NewPodSecurityPolicy(p.podSecurityPolicyName, kubernetes.NewPodSecurityPolicySpec()))
+		Expect(err).ToNot(HaveOccurred())
+
+		p.roleName = "pod-health-role"
+		_, err = p.k8sClient.CreateRole(p.namespace, kubernetes.NewRole(p.roleName, p.podSecurityPolicyName))
+		Expect(err).ToNot(HaveOccurred())
+
+		p.roleBindingName = "pod-health-role-binding"
+		_, err = p.k8sClient.CreateRoleBinding(p.namespace, kubernetes.NewRoleBinding(p.roleName, p.roleBindingName, p.serviceAccountName))
+		Expect(err).ToNot(HaveOccurred())
+	})
+
 	By("Deploying nginx", func() {
 		var err error
-		p.deployment = kubernetes.NewDeployment("nginx", kubernetes.NewNginxDeploymentSpec())
+		p.deployment = kubernetes.NewDeployment("nginx", kubernetes.NewNginxDeploymentSpec(p.serviceAccountName))
 		p.deployment, err = p.k8sClient.CreateDeployment(p.namespace, p.deployment)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -68,7 +89,7 @@ func (p *PodHealth) AfterRestore(config Config) {
 	})
 
 	By("Allowing commands to be executed on the container", func() {
-		args := []string{"get", "pods", "-l", "app="+p.deployment.Name, "--field-selector=status.phase=Running", "-o", "jsonpath={.items[0].metadata.name}"}
+		args := []string{"get", "pods", "-l", "app=" + p.deployment.Name, "--field-selector=status.phase=Running", "-o", "jsonpath={.items[0].metadata.name}"}
 		session := runKubectlCommandInNamespace(p.namespace, args...)
 		Eventually(session, "15s").Should(gexec.Exit(0))
 		podName = string(session.Out.Contents())
@@ -97,6 +118,11 @@ func (p *PodHealth) AfterRestore(config Config) {
 func (p *PodHealth) Cleanup(config Config) {
 	By("Deleting the test namespace and port forwarding", func() {
 		err := p.k8sClient.DeleteNamespace(p.namespace)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	By("Deleting the pod security policy", func() {
+		err := p.k8sClient.DeletePodSecurityPolicy(p.podSecurityPolicyName)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
