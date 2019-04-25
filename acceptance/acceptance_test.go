@@ -59,7 +59,7 @@ var _ = Describe("Kubo", func() {
 
 				Expect(deployments.Items).To(HaveLen(1), fmt.Sprintf("one %s deployment should exist, instead found: %#v", selector, deployments.Items))
 
-				err = k8sClient.WaitForDeployment("kube-system", deployments.Items[0].Name, time.Minute*1, GinkgoWriter)
+				err = k8sClient.WaitForDeployment("kube-system", deployments.Items[0].Name, time.Minute*5, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
