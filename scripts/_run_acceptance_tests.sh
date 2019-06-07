@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
 SCRIPTS_DIR="$(dirname $0)"
 
-ginkgo -v --trace "$SCRIPTS_DIR/../acceptance"
+ginkgo -v --trace "${SCRIPTS_DIR}/../acceptance"
