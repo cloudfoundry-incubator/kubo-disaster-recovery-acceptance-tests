@@ -84,7 +84,7 @@ func (c *Client) WaitForDeployment(namespace, deploymentName string, timeout tim
 			if deployment.Status.AvailableReplicas == deployment.Status.UpdatedReplicas {
 				return true, nil
 			}
-			fmt.Fprintf(writer, "Expected %d to be equal to %d\n", deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
+			fmt.Fprintf(writer, "Waiting for %d to be equal to %d\n", deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
 		}
 
 		return false, nil
