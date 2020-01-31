@@ -1,8 +1,11 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/cache"
 	"net/http"
 	"time"
 
@@ -14,6 +17,7 @@ import (
 
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	toolswatch "k8s.io/client-go/tools/watch"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	restclient "k8s.io/client-go/rest"
@@ -69,12 +73,21 @@ func (c *Client) DeleteDeployment(namespace, deploymentName string) error {
 }
 
 func (c *Client) WaitForDeployment(namespace, deploymentName string, timeout time.Duration, writer io.Writer) error {
-	w, err := c.client.AppsV1().Deployments(namespace).Watch(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
+	lw := func() *cache.ListWatch {
+		return &cache.ListWatch{
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				return c.client.AppsV1().Deployments(namespace).List(options)
+			},
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				return c.client.AppsV1().Deployments(namespace).Watch(options)
+			},
+		}
+	}()
 
-	_, err = watch.Until(timeout, w, func(event watch.Event) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	_, err := toolswatch.UntilWithSync(ctx, lw, &appsv1.Deployment{}, nil, func(event watch.Event) (bool, error) {
 		deployment, ok := event.Object.(*appsv1.Deployment)
 		if !ok {
 			return false, fmt.Errorf("expected `%#v` to be of type appsv1.Deployment", event.Object)
