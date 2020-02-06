@@ -82,8 +82,12 @@ var _ = Describe("Kubo", func() {
 
 		By("Running cleanup for each test case", func() {
 			for _, testCase := range testCases {
-				fmt.Println("Running the cleanup step for " + testCase.Name())
-				testCase.Cleanup(testCaseConfig)
+				if (testCase.Name() == "pod_health") {
+					fmt.Println("SKIPPED! Running the cleanup step for " + testCase.Name())
+				} else {
+					fmt.Println("Running the cleanup step for " + testCase.Name())
+					testCase.Cleanup(testCaseConfig)
+				}
 			}
 		})
 	})
