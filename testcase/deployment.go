@@ -52,7 +52,10 @@ func (t *Deployment) BeforeBackup(config Config) {
 
 		t.podSecurityPolicyName = "deployment-psp"
 		_, err = t.k8sClient.CreatePodSecurityPolicy(kubernetes.NewPodSecurityPolicy(t.podSecurityPolicyName, kubernetes.NewPodSecurityPolicySpec()))
-		Expect(err).ToNot(HaveOccurred())
+		// tolerate pre-existing psp in order to make re-testing on previous environment idempotent
+		if err != nil && err.Error() != "podsecuritypolicies.policy \"deployment-psp\" already exists" {
+			Fail("got an error trying to create security policy: " + err.Error())
+		}
 
 		t.roleName = "deployment-role"
 		_, err = t.k8sClient.CreateRole(t.namespace, kubernetes.NewRole(t.roleName, t.podSecurityPolicyName))

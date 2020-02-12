@@ -53,7 +53,10 @@ func (p *PodHealth) BeforeBackup(config Config) {
 
 		p.podSecurityPolicyName = "pod-health-psp"
 		_, err = p.k8sClient.CreatePodSecurityPolicy(kubernetes.NewPodSecurityPolicy(p.podSecurityPolicyName, kubernetes.NewPodSecurityPolicySpec()))
-		Expect(err).ToNot(HaveOccurred())
+		// tolerate pre-existing psp in order to make re-testing on previous environment idempotent
+		if err != nil && err.Error() != "podsecuritypolicies.policy \"pod-health-psp\" already exists" {
+		   Fail("got an error trying to create security policy: " + err.Error())
+		}
 
 		p.roleName = "pod-health-role"
 		_, err = p.k8sClient.CreateRole(p.namespace, kubernetes.NewRole(p.roleName, p.podSecurityPolicyName))
