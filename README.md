@@ -4,6 +4,10 @@ Tests a given CFCR K8s cluster can be backed up and restored using [`bbr`](https
 
 The acceptance test suite provides hooks around `bbr director backup` and `bbr director restore`.
 
+## Destructive: do not run in parallel with other tests that create/validate K8s objects
+
+IMPORTANT: This suite backs up and restores the universe of K8s. If it is run in parallel with other tests that create and then validate objects, there can be a *race condition* wherein those objects are removed before their subsequent restoration, causing unreliable, "flake", false-positive, failed results.
+
 ## Dependencies
 
 1. Install [Golang](https://golang.org/doc/install)
