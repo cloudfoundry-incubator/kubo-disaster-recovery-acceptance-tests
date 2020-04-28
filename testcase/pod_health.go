@@ -1,6 +1,7 @@
 package testcase
 
 import (
+	"fmt"
 	"os/exec"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 
 	"github.com/cloudfoundry-incubator/kubo-disaster-recovery-acceptance-tests/kubernetes"
 )
+
+var isRunningTest bool
 
 type PodHealth struct {
 	k8sClient             *kubernetes.Client
@@ -86,6 +89,7 @@ func (p *PodHealth) AfterBackup(config Config) {
 }
 
 func (p *PodHealth) AfterRestore(config Config) {
+	isRunningTest = true
 	var podName string
 	By("Waiting for pod to be present", func() {
 		p.k8sClient.WaitForDeployment(p.namespace, p.deployment.Name, p.timeout, GinkgoWriter)
@@ -116,9 +120,15 @@ func (p *PodHealth) AfterRestore(config Config) {
 		Expect(logContent).To(ContainSubstring("curl"))
 		portForwardSess.Terminate().Wait("15s")
 	})
+	isRunningTest = false
 }
 
 func (p *PodHealth) Cleanup(config Config) {
+	if isRunningTest {
+		fmt.Println("Skipping cleanup because stopping in middle of test (error presumed)")
+		return
+	}
+
 	By("Deleting the test namespace and port forwarding", func() {
 		err := p.k8sClient.DeleteNamespace(p.namespace)
 		Expect(err).NotTo(HaveOccurred())
