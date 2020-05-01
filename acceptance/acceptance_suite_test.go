@@ -19,7 +19,6 @@ import (
 
 var (
 	artifactPath   string
-	kubeCACertPath string
 	testCaseConfig = testcase.Config{}
 	testCases      []TestCase
 	filter         TestCaseFilter
@@ -28,7 +27,6 @@ var (
 var availableTestCases = []TestCase{
 	testcase.NewDeployment(),
 	testcase.NewEtcdCluster(),
-	testcase.NewPodHealth(),
 }
 
 func TestAcceptance(t *testing.T) {
