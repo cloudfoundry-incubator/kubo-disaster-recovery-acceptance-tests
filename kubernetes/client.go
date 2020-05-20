@@ -47,39 +47,39 @@ func (c *Client) CreateNamespace(prefix string) (*corev1.Namespace, error) {
 	labels := make(map[string]string)
 	labels["test"] = prefix
 	namespaceObject := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels}}
-	return c.client.CoreV1().Namespaces().Create(&namespaceObject)
+	return c.client.CoreV1().Namespaces().Create(context.TODO(), &namespaceObject, metav1.CreateOptions{})
 }
 
 func (c *Client) DeleteNamespace(namespace string) error {
 	var gracePeriod int64
 	gracePeriod = 0
-	return c.client.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+	return c.client.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 }
 
 func (c *Client) CreateDeployment(namespace string, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
-	return c.client.AppsV1().Deployments(namespace).Create(deployment)
+	return c.client.AppsV1().Deployments(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
 }
 
 func (c *Client) GetDeployment(namespace, deploymentName string) (*appsv1.Deployment, error) {
-	return c.client.AppsV1().Deployments(namespace).Get(deploymentName, metav1.GetOptions{})
+	return c.client.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 }
 
 func (c *Client) GetDeployments(namespace, selector string) (*appsv1.DeploymentList, error) {
-	return c.client.AppsV1().Deployments(namespace).List(metav1.ListOptions{LabelSelector: selector})
+	return c.client.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: selector})
 }
 
 func (c *Client) DeleteDeployment(namespace, deploymentName string) error {
-	return c.client.AppsV1().Deployments(namespace).Delete(deploymentName, &metav1.DeleteOptions{})
+	return c.client.AppsV1().Deployments(namespace).Delete(context.TODO(), deploymentName, metav1.DeleteOptions{})
 }
 
 func (c *Client) WaitForDeployment(namespace, deploymentName string, timeout time.Duration, writer io.Writer) error {
 	lw := func() *cache.ListWatch {
 		return &cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-				return c.client.AppsV1().Deployments(namespace).List(options)
+				return c.client.AppsV1().Deployments(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-				return c.client.AppsV1().Deployments(namespace).Watch(options)
+				return c.client.AppsV1().Deployments(namespace).Watch(context.TODO(), options)
 			},
 		}
 	}()
@@ -113,40 +113,40 @@ func (c *Client) WaitForDeployment(namespace, deploymentName string, timeout tim
 }
 
 func (c *Client) CreateServiceAccount(namespace string, serviceAccount *corev1.ServiceAccount) (*corev1.ServiceAccount, error) {
-	return c.client.CoreV1().ServiceAccounts(namespace).Create(serviceAccount)
+	return c.client.CoreV1().ServiceAccounts(namespace).Create(context.TODO(), serviceAccount, metav1.CreateOptions{})
 }
 
 func (c *Client) DeleteServiceAccount(namespace string, serviceAccountName string) error {
-	return c.client.CoreV1().ServiceAccounts(namespace).Delete(serviceAccountName, &metav1.DeleteOptions{})
+	return c.client.CoreV1().ServiceAccounts(namespace).Delete(context.TODO(), serviceAccountName, metav1.DeleteOptions{})
 }
 
 func (c *Client) CreatePodSecurityPolicy(podSecurityPolicy *policyv1.PodSecurityPolicy) (*policyv1.PodSecurityPolicy, error) {
-	return c.client.PolicyV1beta1().PodSecurityPolicies().Create(podSecurityPolicy)
+	return c.client.PolicyV1beta1().PodSecurityPolicies().Create(context.TODO(), podSecurityPolicy, metav1.CreateOptions{})
 }
 
 func (c *Client) DeletePodSecurityPolicy(podSecurityPolicyName string) error {
-	return c.client.PolicyV1beta1().PodSecurityPolicies().Delete(podSecurityPolicyName, &metav1.DeleteOptions{})
+	return c.client.PolicyV1beta1().PodSecurityPolicies().Delete(context.TODO(), podSecurityPolicyName, metav1.DeleteOptions{})
 }
 
 func (c *Client) CreateRole(namespace string, role *rbac.Role) (*rbac.Role, error) {
-	return c.client.RbacV1().Roles(namespace).Create(role)
+	return c.client.RbacV1().Roles(namespace).Create(context.TODO(), role, metav1.CreateOptions{})
 }
 
 func (c *Client) DeleteRole(namespace, roleName string) error {
-	return c.client.RbacV1().Roles(namespace).Delete(roleName, &metav1.DeleteOptions{})
+	return c.client.RbacV1().Roles(namespace).Delete(context.TODO(), roleName, metav1.DeleteOptions{})
 }
 
 func (c *Client) CreateRoleBinding(namespace string, roleBinding *rbac.RoleBinding) (*rbac.RoleBinding, error) {
-	return c.client.RbacV1().RoleBindings(namespace).Create(roleBinding)
+	return c.client.RbacV1().RoleBindings(namespace).Create(context.TODO(), roleBinding, metav1.CreateOptions{})
 }
 
 func (c *Client) DeleteRoleBinding(namespace, roleBindingName string) error {
-	return c.client.RbacV1().RoleBindings(namespace).Delete(roleBindingName, &metav1.DeleteOptions{})
+	return c.client.RbacV1().RoleBindings(namespace).Delete(context.TODO(), roleBindingName, metav1.DeleteOptions{})
 }
 
 func (c *Client) IsHealthy() bool {
 	var status int
-	c.client.CoreV1().RESTClient().Get().RequestURI("/healthz").Do().StatusCode(&status)
+	c.client.CoreV1().RESTClient().Get().RequestURI("/healthz").Do(context.TODO()).StatusCode(&status)
 	if status == http.StatusOK {
 		return true
 	}
