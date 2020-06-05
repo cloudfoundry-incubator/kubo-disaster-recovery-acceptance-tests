@@ -9,11 +9,22 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"github.com/onsi/gomega/gbytes"
 )
 
+func readAll(buffer *gbytes.Buffer) string {
+	bytes, err := ioutil.ReadAll(buffer)
+	if err != nil {
+		return "cannot read buffer: " + err.Error()
+	}
+	return string(bytes)
+}
+
+
 func RunSuccessfully(description, cmd string, args ...string) *gexec.Session {
-	session := runCommand(description, GinkgoWriter, cmd, args...)
-	Expect(session).To(gexec.Exit(0), "Command errored: "+description)
+	buffer := gbytes.NewBuffer()
+	session := runCommand(description, buffer, cmd, args...)
+	Expect(session).To(gexec.Exit(0), "Command errored: "+description + "\n" + readAll(buffer))
 	return session
 }
 
