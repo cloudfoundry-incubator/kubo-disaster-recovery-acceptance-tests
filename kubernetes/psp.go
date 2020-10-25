@@ -11,7 +11,7 @@ func NewPodSecurityPolicy(name string, spec policyv1.PodSecurityPolicySpec) *pol
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			Annotations: map[string]string{
-				"seccomp.security.alpha.kubernetes.io/allowedProfileNames": "docker/default",
+				"seccomp.security.alpha.kubernetes.io/allowedProfileNames": "runtime/default,docker/default",
 				"apparmor.security.beta.kubernetes.io/allowedProfileNames": "runtime/default",
 				"seccomp.security.alpha.kubernetes.io/defaultProfileName":  "docker/default",
 				"apparmor.security.beta.kubernetes.io/defaultProfileName":  "runtime/default",
