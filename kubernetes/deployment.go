@@ -18,7 +18,7 @@ func NewNginxDeploymentSpec(serviceAccountName string) appsv1.DeploymentSpec {
 		ServiceAccountName: serviceAccountName,
 		Containers: []corev1.Container{{
 			Name:  "nginx",
-			Image: "nginx",
+			Image: "gcr.io/cf-pks-releng-environments/nginx",
 			Ports: []corev1.ContainerPort{{ContainerPort: 80}},
 		}},
 	}
