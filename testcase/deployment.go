@@ -42,7 +42,7 @@ func (t *Deployment) BeforeBackup(config Config) {
 		Expect(err).ToNot(HaveOccurred())
 		t.namespace = nsObject.Name
 
-		t.timeout = 10 * time.Minute
+		t.timeout = 20 * time.Minute
 	})
 
 	By("Creating a service account with PSP privileges", func() {
