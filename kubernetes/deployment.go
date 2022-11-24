@@ -13,9 +13,8 @@ func NewDeployment(name string, spec appsv1.DeploymentSpec) *appsv1.Deployment {
 	}
 }
 
-func NewNginxDeploymentSpec(serviceAccountName string) appsv1.DeploymentSpec {
+func NewNginxDeploymentSpec() appsv1.DeploymentSpec {
 	nginxPodSpec := corev1.PodSpec{
-		ServiceAccountName: serviceAccountName,
 		Containers: []corev1.Container{{
 			Name:  "nginx",
 			Image: "gcr.io/cf-pks-releng-environments/nginx",
