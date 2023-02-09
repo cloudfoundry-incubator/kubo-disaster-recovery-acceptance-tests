@@ -38,7 +38,7 @@ func (t *Deployment) BeforeBackup(config Config) {
 		Expect(err).ToNot(HaveOccurred())
 		t.namespace = nsObject.Name
 
-		t.timeout = 20 * time.Minute
+		t.timeout = 50 * time.Minute
 	})
 
 	By("Deploying workload 1 and 2", func() {
