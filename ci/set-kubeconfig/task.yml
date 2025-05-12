@@ -4,7 +4,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: gcr.io/cf-pks-releng-environments/pcfplatformrecovery/k-drats
+    repository: us.gcr.io/cf-pks-releng-a1/pcfplatformrecovery/k-drats
 inputs:
 - name: kubo-disaster-recovery-acceptance-tests
 - name: terraform

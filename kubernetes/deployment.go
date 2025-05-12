@@ -17,7 +17,7 @@ func NewNginxDeploymentSpec() appsv1.DeploymentSpec {
 	nginxPodSpec := corev1.PodSpec{
 		Containers: []corev1.Container{{
 			Name:  "nginx",
-			Image: "gcr.io/cf-pks-releng-environments/nginx",
+			Image: "us.gcr.io/cf-pks-releng-a1/nginx",
 			Ports: []corev1.ContainerPort{{ContainerPort: 80}},
 		}},
 	}
